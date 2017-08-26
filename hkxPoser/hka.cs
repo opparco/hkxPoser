@@ -306,12 +306,12 @@ public class hkaAnimation
     {
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
         {
-            string head = "hkdump File Format, Version 1.0.0.0\n";
+            string head = "hkdump File Format, Version 1.0.0.0";
             uint version = 0x01000000;
             int nskeletons = 0;
             int nanimations = 1;
 
-            writer.Write(head);
+            writer.WriteHeaderString(head);
             writer.Write(version);
             writer.Write(nskeletons);
             writer.Write(nanimations);

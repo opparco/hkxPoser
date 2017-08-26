@@ -23,6 +23,14 @@ public static class BinaryWriterMethods
         writer.Write(q.W);
     }
 
+    public static void WriteHeaderString(this BinaryWriter writer, string s)
+    {
+        foreach (byte i in Encoding.Default.GetBytes(s))
+            writer.Write(i);
+
+        writer.Write((byte)10);
+    }
+
     public static void WriteCString(this BinaryWriter writer, string s)
     {
         foreach (byte i in Encoding.Default.GetBytes(s))

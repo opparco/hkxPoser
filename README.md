@@ -2,7 +2,8 @@
 This is a simple editor of animation.hkx. I made it for the purpose of fine adjustment of existing pose.
 
 ## Prerequisite
-.NET Framework 4.5.2
+- .NET Framework 4.5.2
+- [hkdump](https://github.com/opparco/hkdump)
 
 ## Usage
 Start hkxPoser.exe.
@@ -31,7 +32,6 @@ Then the selected bone moves and rotates.
 ### Prerequisite
 - Visual Studio 2017
 - SharpDX 4.0.1
-- [hkdump](https://github.com/opparco/hkdump)
 
 Run MSBuild
 

@@ -31,7 +31,7 @@ Then the selected bone moves and rotates.
 ### Prerequisite
 - Visual Studio 2017
 - SharpDX 4.0.1
--[hkdump](https://github.com/opparco/hkdump)
+- [hkdump](https://github.com/opparco/hkdump)
 
 Run MSBuild
 

@@ -14,6 +14,7 @@ The selected bone will turn red.
 You can operate the selected bone.
 - Loc: Location
 - Rot: Rotation
+
 Hold down any of the XYZ buttons and move the mouse.
 Then the selected bone moves and rotates.
 
@@ -30,6 +31,7 @@ Then the selected bone moves and rotates.
 ### Prerequisite
 - Visual Studio 2017
 - SharpDX 4.0.1
+-[hkdump](https://github.com/opparco/hkdump)
 
 Run MSBuild
 

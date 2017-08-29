@@ -223,6 +223,8 @@ public class hkaAnimation
     public float duration;
     //public int numTransforms;
     //public int numFloats;
+
+    //TODO: array of hkaPose
     public float time;
     public Transform[] transforms;
     public float[] floats;

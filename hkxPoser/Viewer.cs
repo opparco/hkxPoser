@@ -163,6 +163,8 @@ namespace hkxPoser
         {
             string file = CreateTempFileName(dest_file);
 
+            anim.numOriginalFrames = 1;
+            anim.duration = 1.0f/30.0f;
             anim.Save(file);
 
             ProcessStartInfo info = new ProcessStartInfo(

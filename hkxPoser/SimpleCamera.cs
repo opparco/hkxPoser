@@ -4,7 +4,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using SharpDX;
-using SharpDX.Direct3D9;
+using SharpDX.Direct3D11;
 
 /// <summary>
 /// カメラ

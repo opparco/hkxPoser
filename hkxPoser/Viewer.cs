@@ -13,9 +13,6 @@ using SharpDX.Direct3D11;
 using SharpDX.Direct2D1;
 using System.Windows.Forms;
 
-using ObjectRef = System.Int32;
-using StringRef = System.Int32;
-
 namespace hkxPoser
 {
     class Viewer : IDisposable
@@ -145,17 +142,44 @@ namespace hkxPoser
         hkaSkeleton skeleton;
         hkaAnimation anim;
 
+        void CreateViewport(ref System.Drawing.Size clientSize)
+        {
+            viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f);
+
+            Matrix.PerspectiveFovRH(
+                    (float)(Math.PI / 6.0),
+                    (float)viewport.Width / (float)viewport.Height,
+                    1.0f,
+                    500.0f,
+                    out proj);
+        }
+
+        protected void form_Resize(object sender, EventArgs e)
+        {
+            DiscardDeviceResources();
+
+            SwapChainDescription desc = swapChain.Description;
+            System.Drawing.Size clientSize = control.ClientSize;
+
+            swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
+
+            CreateViewport(ref clientSize);
+        }
+
         public bool InitializeGraphics(Control control)
         {
             this.control = control;
 
             AttachMouseEventHandler(control);
+            control.Resize += new System.EventHandler(form_Resize);
+
+            System.Drawing.Size clientSize = control.ClientSize;
 
             // SwapChain description
             var desc = new SwapChainDescription()
             {
                 BufferCount = 1,
-                ModeDescription = new ModeDescription(control.ClientSize.Width, control.ClientSize.Height, new Rational(60, 1), Format.R8G8B8A8_UNorm),
+                ModeDescription = new ModeDescription(clientSize.Width, clientSize.Height, new Rational(60, 1), Format.R8G8B8A8_UNorm),
                 IsWindowed = true,
                 OutputHandle = control.Handle,
                 SampleDescription = new SampleDescription(1, 0),
@@ -165,17 +189,9 @@ namespace hkxPoser
 
             // Create Device and SwapChain
             SharpDX.Direct3D11.Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.BgraSupport, new SharpDX.Direct3D.FeatureLevel[] { SharpDX.Direct3D.FeatureLevel.Level_10_0 }, desc, out device, out swapChain);
-
-            viewport = new Viewport(0, 0, control.ClientSize.Width, control.ClientSize.Height, 0.0f, 1.0f);
+            CreateViewport(ref clientSize);
 
             world = Matrix.Identity;
-
-            Matrix.PerspectiveFovRH(
-                    (float)(Math.PI / 6.0),
-                    (float)viewport.Width / (float)viewport.Height,
-                    1.0f,
-                    500.0f,
-                    out proj);
 
             skeleton = new hkaSkeleton();
             skeleton.Load(Path.Combine(Application.StartupPath, @"resources\skeleton.bin"));

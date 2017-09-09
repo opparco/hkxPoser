@@ -22,7 +22,7 @@ namespace hkxPoser
             viewer = new Viewer();
             viewer.LoadAnimationEvent += delegate(object sender, EventArgs args)
             {
-                trackBar1.Maximum = viewer.GetNumFrames();
+                trackBar1.Maximum = viewer.GetNumFrames()-1;
                 trackBar1.Value = 0;
             };
             if (viewer.InitializeGraphics(this))

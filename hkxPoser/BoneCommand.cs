@@ -38,29 +38,29 @@ namespace hkxPoser
         public BoneCommand(hkaBone bone)
         {
             this.bone = bone;
-            this.old_attr.rotation = bone.local.rotation;
-            this.old_attr.translation = bone.local.translation;
+            this.old_attr.rotation = bone.patch.rotation;
+            this.old_attr.translation = bone.patch.translation;
         }
 
         /// 元に戻す。
         public void Undo()
         {
-            bone.local.rotation = old_attr.rotation;
-            bone.local.translation = old_attr.translation;
+            bone.patch.rotation = old_attr.rotation;
+            bone.patch.translation = old_attr.translation;
         }
 
         /// やり直す。
         public void Redo()
         {
-            bone.local.rotation = new_attr.rotation;
-            bone.local.translation = new_attr.translation;
+            bone.patch.rotation = new_attr.rotation;
+            bone.patch.translation = new_attr.translation;
         }
 
         /// 実行する。
         public bool Execute()
         {
-            this.new_attr.rotation = bone.local.rotation;
-            this.new_attr.translation = bone.local.translation;
+            this.new_attr.rotation = bone.patch.rotation;
+            this.new_attr.translation = bone.patch.translation;
             bool updated = old_attr.rotation != new_attr.rotation || old_attr.translation != new_attr.translation;
             return updated;
         }

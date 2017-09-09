@@ -76,6 +76,7 @@ public class hkaBone
     internal hkaBone parent = null;
     internal List<hkaBone> children = new List<hkaBone>();
     internal Transform local;
+    internal Transform patch;
 
     public void Read(BinaryReader reader)
     {
@@ -90,7 +91,7 @@ public class hkaBone
         while (bone != null)
         {
             //Console.WriteLine(" local loop idx {0} Ref {1}", i, node.self_ref);
-            t = bone.local * t;
+            t = bone.local * bone.patch * t;
             bone = bone.parent;
             //i++;
         }
@@ -196,6 +197,7 @@ public class hkaSkeleton
         {
             hkaBone bone = this.bones[i];
             bone.local = this.referencePose[i];
+            bone.patch = new Transform();
         }
 
         /// The reference values for the float slots of this skeleton. This pose is stored in local space.
@@ -298,7 +300,6 @@ public class hkaAnimation
 		Console.WriteLine("Error: #animations should be 1 but {0}! Abort.", nanimations);
                 return false;
             }
-
             Read(reader);
         }
         return true;

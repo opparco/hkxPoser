@@ -642,10 +642,10 @@ namespace hkxPoser
             if (bone == null)
                 return;
 
-            axis = Vector3.Transform(axis, bone.local.rotation);
+            axis = Vector3.Transform(axis, bone.local.rotation * bone.patch.rotation);
 
             float len = dx * 0.0125f;
-            bone.local.translation += axis * len;
+            bone.patch.translation += axis * len;
         }
 
         /// 選択boneを指定軸中心に回転します。
@@ -657,7 +657,7 @@ namespace hkxPoser
                 return;
 
             float angle = dx * 0.005f;
-            bone.local.rotation *= Quaternion.RotationAxis(axis, angle);
+            bone.patch.rotation *= Quaternion.RotationAxis(axis, angle);
         }
 
         public void Dispose()

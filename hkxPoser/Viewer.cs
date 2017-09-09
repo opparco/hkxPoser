@@ -145,11 +145,6 @@ namespace hkxPoser
         hkaSkeleton skeleton;
         hkaAnimation anim;
 
-        /*
-        internal Sprite sprite = null;
-        internal Texture dot_texture = null;
-        */
-
         public bool InitializeGraphics(Control control)
         {
             this.control = control;

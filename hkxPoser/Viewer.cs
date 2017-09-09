@@ -142,6 +142,8 @@ namespace hkxPoser
         hkaSkeleton skeleton;
         hkaAnimation anim;
 
+        public event EventHandler LoadAnimationEvent;
+
         void CreateViewport(ref System.Drawing.Size clientSize)
         {
             viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f);
@@ -199,6 +201,9 @@ namespace hkxPoser
             anim = new hkaAnimation();
             anim.Load(Path.Combine(Application.StartupPath, @"resources\idle.bin"));
 
+            if (LoadAnimationEvent != null)
+                LoadAnimationEvent(this, EventArgs.Empty);
+
             AssignAnimationPose(0);
 
             CreateDeviceIndependentResources();
@@ -244,6 +249,9 @@ namespace hkxPoser
             {
                 if (anim.Load(file))
                 {
+                    if (LoadAnimationEvent != null)
+                        LoadAnimationEvent(this, EventArgs.Empty);
+
                     AssignAnimationPose(0);
                 }
             }

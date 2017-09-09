@@ -20,9 +20,13 @@ namespace hkxPoser
 
             this.ClientSize = new Size(640, 640);
             viewer = new Viewer();
-            if (viewer.InitializeGraphics(this))
+            viewer.LoadAnimationEvent += delegate(object sender, EventArgs args)
             {
                 trackBar1.Maximum = viewer.GetNumFrames();
+                trackBar1.Value = 0;
+            };
+            if (viewer.InitializeGraphics(this))
+            {
                 timer1.Enabled = true;
             }
         }

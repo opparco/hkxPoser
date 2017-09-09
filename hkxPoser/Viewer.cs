@@ -183,19 +183,20 @@ namespace hkxPoser
             anim = new hkaAnimation();
             anim.Load(Path.Combine(Application.StartupPath, @"resources\idle.bin"));
 
-            AssignAnimationPose();
+            AssignAnimationPose(0);
 
             CreateDeviceIndependentResources();
 
             return true;
         }
 
-        public void AssignAnimationPose()
+        public void AssignAnimationPose(int pose_i)
         {
-            int len = System.Math.Min(skeleton.bones.Length, anim.pose[0].transforms.Length);
+            pose_i %= anim.numOriginalFrames;
+            int len = System.Math.Min(skeleton.bones.Length, anim.pose[pose_i].transforms.Length);
             for (int i = 0; i < len; i++)
             {
-                skeleton.bones[i].local = anim.pose[0].transforms[i];
+                skeleton.bones[i].local = anim.pose[pose_i].transforms[i];
             }
         }
 
@@ -227,7 +228,7 @@ namespace hkxPoser
             {
                 if (anim.Load(file))
                 {
-                    AssignAnimationPose();
+                    AssignAnimationPose(0);
                 }
             }
         }
@@ -252,12 +253,18 @@ namespace hkxPoser
         }
 
         SimpleCamera camera = new SimpleCamera();
+        int current_pose_i = 0;
 
         public void Update()
         {
             camera.Update();
             view = camera.ViewMatrix;
             wvp = world * view * proj;
+
+            // run animation
+            AssignAnimationPose(current_pose_i);
+            current_pose_i++;
+            current_pose_i %= anim.numOriginalFrames;
         }
 
         public void Render()

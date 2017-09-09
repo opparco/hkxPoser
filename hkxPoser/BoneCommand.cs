@@ -2,39 +2,39 @@ using SharpDX;
 
 namespace hkxPoser
 {
-    /// ‘€ì‚ğˆµ‚¢‚Ü‚·B
+    /// æ“ä½œã‚’æ‰±ã„ã¾ã™ã€‚
     public interface ICommand
     {
-        /// Œ³‚É–ß‚·B
+        /// å…ƒã«æˆ»ã™ã€‚
         void Undo();
 
-        /// ‚â‚è’¼‚·B
+        /// ã‚„ã‚Šç›´ã™ã€‚
         void Redo();
 
-        /// Às‚·‚éB
+        /// å®Ÿè¡Œã™ã‚‹ã€‚
         bool Execute();
     }
 
-    /// bone‘®«
+    /// boneå±æ€§
     public struct BoneAttr
     {
-        /// ‰ñ“]
+        /// å›è»¢
         public Quaternion rotation;
-        /// ˆÚ“®
+        /// ç§»å‹•
         public Vector3 translation;
     }
 
-    /// bone‘€ì
+    /// boneæ“ä½œ
     public class BoneCommand : ICommand
     {
-        //‘€ì‘ÎÛbone
+        //æ“ä½œå¯¾è±¡bone
         hkaBone bone = null;
-        /// •ÏX‘O‚Ì‘®«
+        /// å¤‰æ›´å‰ã®å±æ€§
         BoneAttr old_attr;
-        /// •ÏXŒã‚Ì‘®«
+        /// å¤‰æ›´å¾Œã®å±æ€§
         BoneAttr new_attr;
 
-        /// bone‘€ì‚ğ¶¬‚µ‚Ü‚·B
+        /// boneæ“ä½œã‚’ç”Ÿæˆã—ã¾ã™ã€‚
         public BoneCommand(hkaBone bone)
         {
             this.bone = bone;
@@ -42,21 +42,21 @@ namespace hkxPoser
             this.old_attr.translation = bone.local.translation;
         }
 
-        /// Œ³‚É–ß‚·B
+        /// å…ƒã«æˆ»ã™ã€‚
         public void Undo()
         {
             bone.local.rotation = old_attr.rotation;
             bone.local.translation = old_attr.translation;
         }
 
-        /// ‚â‚è’¼‚·B
+        /// ã‚„ã‚Šç›´ã™ã€‚
         public void Redo()
         {
             bone.local.rotation = new_attr.rotation;
             bone.local.translation = new_attr.translation;
         }
 
-        /// Às‚·‚éB
+        /// å®Ÿè¡Œã™ã‚‹ã€‚
         public bool Execute()
         {
             this.new_attr.rotation = bone.local.rotation;

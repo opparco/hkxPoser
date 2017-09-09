@@ -7,17 +7,76 @@ using System.Threading.Tasks;
 
 using SharpDX;
 using SharpDX.Mathematics.Interop;
-using SharpDX.Direct3D9;
+using SharpDX.DXGI;
+using SharpDX.Direct3D;
+using SharpDX.Direct3D11;
+using SharpDX.Direct2D1;
 using System.Windows.Forms;
-
-using ObjectRef = System.Int32;
-using StringRef = System.Int32;
 
 namespace hkxPoser
 {
     class Viewer : IDisposable
     {
-        Device device;
+        Control control;
+
+        SharpDX.Direct3D11.Device device;
+        SwapChain swapChain;
+
+        SharpDX.Direct2D1.Factory d2dFactory;
+
+        RenderTarget renderTarget;
+        SolidColorBrush boneLineBrush;
+        SolidColorBrush selectedBoneLineBrush;
+        SolidColorBrush xaxisBrush;
+        SolidColorBrush yaxisBrush;
+        SolidColorBrush zaxisBrush;
+
+        Color boneLineColor = new ColorBGRA(100, 100, 230, 255);
+        Color selectedBoneLineColor = new ColorBGRA(255, 0, 0, 255);
+        Color xaxisColor = new ColorBGRA(255, 0, 0, 255);
+        Color yaxisColor = new ColorBGRA(0, 255, 0, 255);
+        Color zaxisColor = new ColorBGRA(0, 0, 255, 255);
+
+        int CreateDeviceIndependentResources()
+        {
+            d2dFactory = new SharpDX.Direct2D1.Factory();
+
+            return 0;
+        }
+
+        int CreateDeviceResources(ref Size2 size)
+        {
+            if (renderTarget == null)
+            {
+                using (Surface sf = swapChain.GetBackBuffer<Surface>(0))
+                {
+                    renderTarget = new RenderTarget(d2dFactory, sf, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)));
+                }
+
+                boneLineBrush = new SolidColorBrush(renderTarget, boneLineColor);
+                selectedBoneLineBrush = new SolidColorBrush(renderTarget, selectedBoneLineColor);
+                xaxisBrush = new SolidColorBrush(renderTarget, xaxisColor);
+                yaxisBrush = new SolidColorBrush(renderTarget, yaxisColor);
+                zaxisBrush = new SolidColorBrush(renderTarget, zaxisColor);
+            }
+            return 0;
+        }
+
+        int DiscardDeviceResources()
+        {
+            if (renderTarget != null)
+            {
+                zaxisBrush?.Dispose();
+                yaxisBrush?.Dispose();
+                xaxisBrush?.Dispose();
+                selectedBoneLineBrush?.Dispose();
+                boneLineBrush?.Dispose();
+
+                renderTarget.Dispose();
+                renderTarget = null;
+            }
+            return 0;
+        }
 
         /// <summary>
         /// マウスポイントしているスクリーン座標
@@ -73,6 +132,8 @@ namespace hkxPoser
             control.MouseDown -= new MouseEventHandler(form_OnMouseDown);
         }
 
+        Viewport viewport;
+
         Matrix world;
         Matrix view;
         Matrix proj;
@@ -81,27 +142,56 @@ namespace hkxPoser
         hkaSkeleton skeleton;
         hkaAnimation anim;
 
-        internal Sprite sprite = null;
-        internal Texture dot_texture = null;
-
-        public bool InitializeGraphics(Control control)
+        void CreateViewport(ref System.Drawing.Size clientSize)
         {
-            AttachMouseEventHandler(control);
-
-            PresentParameters pp = new PresentParameters();
-            pp.Windowed = true;
-            pp.SwapEffect = SwapEffect.Discard;
-
-            device = new Device(new Direct3D(), 0, DeviceType.Hardware, control.Handle, CreateFlags.HardwareVertexProcessing, pp);
-
-            world = Matrix.Identity;
+            viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f);
 
             Matrix.PerspectiveFovRH(
                     (float)(Math.PI / 6.0),
-                    (float)device.Viewport.Width / (float)device.Viewport.Height,
+                    (float)viewport.Width / (float)viewport.Height,
                     1.0f,
                     500.0f,
                     out proj);
+        }
+
+        protected void form_Resize(object sender, EventArgs e)
+        {
+            DiscardDeviceResources();
+
+            SwapChainDescription desc = swapChain.Description;
+            System.Drawing.Size clientSize = control.ClientSize;
+
+            swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
+
+            CreateViewport(ref clientSize);
+        }
+
+        public bool InitializeGraphics(Control control)
+        {
+            this.control = control;
+
+            AttachMouseEventHandler(control);
+            control.Resize += new System.EventHandler(form_Resize);
+
+            System.Drawing.Size clientSize = control.ClientSize;
+
+            // SwapChain description
+            var desc = new SwapChainDescription()
+            {
+                BufferCount = 1,
+                ModeDescription = new ModeDescription(clientSize.Width, clientSize.Height, new Rational(60, 1), Format.R8G8B8A8_UNorm),
+                IsWindowed = true,
+                OutputHandle = control.Handle,
+                SampleDescription = new SampleDescription(1, 0),
+                SwapEffect = SwapEffect.Discard,
+                Usage = Usage.RenderTargetOutput
+            };
+
+            // Create Device and SwapChain
+            SharpDX.Direct3D11.Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.BgraSupport, new SharpDX.Direct3D.FeatureLevel[] { SharpDX.Direct3D.FeatureLevel.Level_10_0 }, desc, out device, out swapChain);
+            CreateViewport(ref clientSize);
+
+            world = Matrix.Identity;
 
             skeleton = new hkaSkeleton();
             skeleton.Load(Path.Combine(Application.StartupPath, @"resources\skeleton.bin"));
@@ -111,8 +201,7 @@ namespace hkxPoser
 
             AssignAnimationPose();
 
-            sprite = new Sprite(device);
-            dot_texture = Texture.FromFile(device, Path.Combine(Application.StartupPath, @"resources\dot.png"));
+            CreateDeviceIndependentResources();
 
             return true;
         }
@@ -189,31 +278,51 @@ namespace hkxPoser
 
         public void Render()
         {
-            device.Clear(ClearFlags.Target, new ColorBGRA(192, 192, 192, 255), 1.0f, 0);
+            Size2 size = new Size2(viewport.Width, viewport.Height);
 
-            device.BeginScene();
+            CreateDeviceResources(ref size);
+
+            renderTarget.BeginDraw();
+            renderTarget.Clear(new Color(192, 192, 192, 255));
 
             DrawCenterAxis();
 
             DrawBoneTree();
             DrawSelectedBone();
 
-            device.EndScene();
+            try
+            {
+                renderTarget.EndDraw();
+            }
+            catch (SharpDXException ex) when ((uint)ex.HResult == 0x8899000C) // D2DERR_RECREATE_TARGET
+            {
+                // device has been lost!
+                DiscardDeviceResources();
+            }
 
-            device.Present();
+            swapChain.Present(0, PresentFlags.None);
         }
 
-        private void DrawCenterAxis()
+        void DrawLine(Vector3 p0, Vector3 p1, Brush brush)
         {
-            Line line = new Line(device);
-            line.Width = 2;
+            renderTarget.DrawLine(new Vector2(p0.X, p0.Y), new Vector2(p1.X, p1.Y), brush);
+        }
 
-            // draw axis
-            line.DrawTransform(new Vector3[2] { Vector3.Zero, new Vector3(5, 0, 0) }, wvp, new ColorBGRA(255, 0, 0, 255));
-            line.DrawTransform(new Vector3[2] { Vector3.Zero, new Vector3(0, 5, 0) }, wvp, new ColorBGRA(0, 255, 0, 255));
-            line.DrawTransform(new Vector3[2] { Vector3.Zero, new Vector3(0, 0, 5) }, wvp, new ColorBGRA(0, 0, 255, 255));
+        void DrawCenterAxis()
+        {
+            Vector3 center = Vector3.Zero;
+            Vector3 xaxis = new Vector3(5, 0, 0);
+            Vector3 yaxis = new Vector3(0, 5, 0);
+            Vector3 zaxis = new Vector3(0, 0, 5);
 
-            line.Dispose();
+            Vector3 scr_center = WorldToScreen(center);
+            Vector3 scr_xaxis = WorldToScreen(xaxis);
+            Vector3 scr_yaxis = WorldToScreen(yaxis);
+            Vector3 scr_zaxis = WorldToScreen(zaxis);
+
+            DrawLine(scr_center, scr_xaxis, xaxisBrush);
+            DrawLine(scr_center, scr_yaxis, yaxisBrush);
+            DrawLine(scr_center, scr_zaxis, zaxisBrush);
         }
 
         /// <summary>
@@ -242,7 +351,7 @@ namespace hkxPoser
         /// ワールド座標をスクリーン位置へ変換します。
         public Vector3 WorldToScreen(Vector3 v)
         {
-            return WorldToScreen(v, device.Viewport, view, proj);
+            return WorldToScreen(v, viewport, view, proj);
         }
 
         Vector3 GetBonePositionOnScreen(hkaBone bone)
@@ -251,11 +360,8 @@ namespace hkxPoser
             return WorldToScreen(t.translation);
         }
 
-        Color SelectedBoneLineColor = new ColorBGRA(100, 100, 230, 255);
-
         public void DrawBoneTree()
         {
-            Line line = new Line(device);
             foreach (hkaBone bone in skeleton.bones)
             {
                 if (bone.hide)
@@ -279,15 +385,11 @@ namespace hkxPoser
                     vertices[0] = new RawVector2(p3.X, p3.Y);
                     vertices[1] = new RawVector2(p0.X, p0.Y);
                     vertices[2] = new RawVector2(p4.X, p4.Y);
-                    line.Draw(vertices, SelectedBoneLineColor);
+                    renderTarget.DrawLine(vertices[0], vertices[1], boneLineBrush);
+                    renderTarget.DrawLine(vertices[1], vertices[2], boneLineBrush);
                 }
             }
-            line.Dispose();
-            line = null;
 
-            Rectangle rect = new Rectangle(0, 16, 15, 15); //bone circle
-            Vector3 rect_center = new Vector3(7, 7, 0);
-            sprite.Begin(SpriteFlags.AlphaBlend);
             foreach (hkaBone bone in skeleton.bones)
             {
                 if (bone.hide)
@@ -296,14 +398,12 @@ namespace hkxPoser
                 Vector3 p0 = GetBonePositionOnScreen(bone);
                 p0.Z = 0.0f;
 
-                sprite.Draw(dot_texture, Color.White, rect, rect_center, p0);
+                renderTarget.DrawEllipse(new Ellipse(new Vector2(p0.X, p0.Y), 4, 4), boneLineBrush);
+                renderTarget.FillEllipse(new Ellipse(new Vector2(p0.X, p0.Y), 2, 2), boneLineBrush);
             }
-            sprite.End();
 
             //DrawBoneAxis(bone);
         }
-
-        Color BoneLineColor = new ColorBGRA(255, 0, 0, 255);
 
         /// 選択boneを描画する。
         void DrawSelectedBone()
@@ -316,8 +416,6 @@ namespace hkxPoser
 
             if (selected_bone.children.Count != 0)
             {
-                Line line = new Line(device);
-
                 hkaBone bone = selected_bone.children[0];
                 Vector3 p0 = GetBonePositionOnScreen(bone);
                 p0.Z = 0.0f;
@@ -332,19 +430,14 @@ namespace hkxPoser
                 vertices[0] = new RawVector2(p3.X, p3.Y);
                 vertices[1] = new RawVector2(p0.X, p0.Y);
                 vertices[2] = new RawVector2(p4.X, p4.Y);
-                line.Draw(vertices, BoneLineColor);
-
-                line.Dispose();
-                line = null;
+                renderTarget.DrawLine(vertices[0], vertices[1], selectedBoneLineBrush);
+                renderTarget.DrawLine(vertices[1], vertices[2], selectedBoneLineBrush);
             }
 
             DrawBoneAxis(selected_bone);
 
-            Rectangle rect = new Rectangle(16, 16, 15, 15); //bone circle
-            Vector3 rect_center = new Vector3(7, 7, 0);
-            sprite.Begin(SpriteFlags.AlphaBlend);
-            sprite.Draw(dot_texture, Color.White, rect, rect_center, p1);
-            sprite.End();
+            renderTarget.DrawEllipse(new Ellipse(new Vector2(p1.X, p1.Y), 4, 4), selectedBoneLineBrush);
+            renderTarget.FillEllipse(new Ellipse(new Vector2(p1.X, p1.Y), 2, 2), selectedBoneLineBrush);
         }
 
         void DrawBoneAxis(hkaBone bone)
@@ -358,15 +451,18 @@ namespace hkxPoser
             Vector3 zvec = rotation.Row3 * 5.0f;
             Vector3 location = t.translation;
 
-            Line line = new Line(device);
-            line.Width = 2;
+            Vector3 xaxis = location + xvec;
+            Vector3 yaxis = location + yvec;
+            Vector3 zaxis = location + zvec;
 
-            // draw axis
-            line.DrawTransform(new Vector3[2] { location, location + xvec }, wvp, new ColorBGRA(255, 0, 0, 255));
-            line.DrawTransform(new Vector3[2] { location, location + yvec }, wvp, new ColorBGRA(0, 255, 0, 255));
-            line.DrawTransform(new Vector3[2] { location, location + zvec }, wvp, new ColorBGRA(0, 0, 255, 255));
+            Vector3 scr_location = WorldToScreen(location);
+            Vector3 scr_xaxis = WorldToScreen(xaxis);
+            Vector3 scr_yaxis = WorldToScreen(yaxis);
+            Vector3 scr_zaxis = WorldToScreen(zaxis);
 
-            line.Dispose();
+            DrawLine(scr_location, scr_xaxis, xaxisBrush);
+            DrawLine(scr_location, scr_yaxis, yaxisBrush);
+            DrawLine(scr_location, scr_zaxis, zaxisBrush);
         }
 
         hkaBone selected_bone = null;
@@ -538,8 +634,11 @@ namespace hkxPoser
 
         public void Dispose()
         {
+            /*
             dot_texture?.Dispose();
             sprite?.Dispose();
+            */
+            swapChain?.Dispose();
             device?.Dispose();
         }
     }

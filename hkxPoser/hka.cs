@@ -217,6 +217,47 @@ public class hkaSkeleton
     }
 }
 
+public class hkaPose
+{
+    public float time;
+    public Transform[] transforms;
+    public float[] floats;
+
+    public void Read(BinaryReader reader, int numTransforms, int numFloats)
+    {
+        this.time = reader.ReadSingle();
+
+        this.transforms = new Transform[numTransforms];
+        for (int i = 0; i < numTransforms; i++)
+        {
+            Transform t = new Transform();
+            t.Read(reader);
+            this.transforms[i] = t;
+        }
+
+        this.floats = new float[numFloats];
+        for (int i = 0; i < numFloats; i++)
+        {
+            this.floats[i] = reader.ReadSingle();
+        }
+    }
+
+    public void Write(BinaryWriter writer)
+    {
+        writer.Write(this.time);
+
+        for (int i = 0, len = this.transforms.Length; i < len; i++)
+        {
+            this.transforms[i].Write(writer);
+        }
+
+        for (int i = 0, len = this.floats.Length; i < len; i++)
+        {
+            writer.Write(this.floats[i]);
+        }
+    }
+}
+
 public class hkaAnimation
 {
     public int numOriginalFrames;
@@ -224,10 +265,7 @@ public class hkaAnimation
     //public int numTransforms;
     //public int numFloats;
 
-    //TODO: array of hkaPose
-    public float time;
-    public Transform[] transforms;
-    public float[] floats;
+    public hkaPose[] pose;
 
     /// load anim.bin
     public bool Load(string filename)
@@ -279,23 +317,13 @@ public class hkaAnimation
 
         /// Get a subset of the first 'maxNumTracks' transform tracks (all tracks from 0 to maxNumTracks-1 inclusive), and the first 'maxNumFloatTracks' float tracks of a pose at a given time.
 
-        this.time = reader.ReadSingle();
-
-        this.transforms = new Transform[numTransforms];
-        for (int i=0; i<numTransforms; i++)
+        this.pose = new hkaPose[numOriginalFrames];
+        for (int i = 0; i < numOriginalFrames; i++)
         {
-            Transform t = new Transform();
-            t.Read(reader);
-            this.transforms[i] = t;
-        }
-
-        this.floats = new float[numFloats];
-        for (int i=0; i<numFloats; i++)
-        {
-            this.floats[i] = reader.ReadSingle();
+            this.pose[i] = new hkaPose();
+            this.pose[i].Read(reader, numTransforms, numFloats);
         }
     }
-
 
     /// save anim.bin
     public void Save(string filename)
@@ -326,16 +354,16 @@ public class hkaAnimation
     {
         writer.Write(this.numOriginalFrames);
         writer.Write(this.duration);
-        writer.Write(this.transforms.Length);
-        writer.Write(this.floats.Length);
-        writer.Write(this.time);
-        for (int i=0, len=this.transforms.Length; i<len; i++)
+
+        int numTransforms = this.pose[0].transforms.Length;
+        int numFloats = this.pose[0].floats.Length;
+
+        writer.Write(numTransforms);
+        writer.Write(numFloats);
+
+        for (int i = 0; i < numOriginalFrames; i++)
         {
-            this.transforms[i].Write(writer);
-        }
-        for (int i=0, len=this.floats.Length; i<len; i++)
-        {
-            writer.Write(this.floats[i]);
+            this.pose[i].Write(writer);
         }
     }
 }

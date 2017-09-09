@@ -192,10 +192,10 @@ namespace hkxPoser
 
         public void AssignAnimationPose()
         {
-            int len = System.Math.Min(skeleton.bones.Length, anim.transforms.Length);
+            int len = System.Math.Min(skeleton.bones.Length, anim.pose[0].transforms.Length);
             for (int i = 0; i < len; i++)
             {
-                skeleton.bones[i].local = anim.transforms[i];
+                skeleton.bones[i].local = anim.pose[0].transforms[i];
             }
         }
 

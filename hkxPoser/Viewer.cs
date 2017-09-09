@@ -269,7 +269,18 @@ namespace hkxPoser
         }
 
         SimpleCamera camera = new SimpleCamera();
-        int current_pose_i = 0;
+
+        //int current_pose_i = 0;
+
+        public int GetNumFrames()
+        {
+            return anim.numOriginalFrames;
+        }
+
+        public void SetCurrentPose(int pose_i)
+        {
+            AssignAnimationPose(pose_i);
+        }
 
         public void Update()
         {
@@ -278,9 +289,11 @@ namespace hkxPoser
             wvp = world * view * proj;
 
             // run animation
+            /*
             AssignAnimationPose(current_pose_i);
             current_pose_i++;
             current_pose_i %= anim.numOriginalFrames;
+            */
         }
 
         public void Render()

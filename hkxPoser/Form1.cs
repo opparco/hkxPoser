@@ -21,7 +21,10 @@ namespace hkxPoser
             this.ClientSize = new Size(640, 640);
             viewer = new Viewer();
             if (viewer.InitializeGraphics(this))
+            {
+                trackBar1.Maximum = viewer.GetNumFrames();
                 timer1.Enabled = true;
+            }
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -63,6 +66,11 @@ namespace hkxPoser
                 string dest_file = dialog.FileName;
                 viewer.SaveAnimation(dest_file);
             }
+        }
+
+        private void trackBar1_ValueChanged(object sender, EventArgs e)
+        {
+            viewer.SetCurrentPose(trackBar1.Value);
         }
     }
 }

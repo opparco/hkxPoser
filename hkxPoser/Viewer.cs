@@ -214,10 +214,33 @@ namespace hkxPoser
         public void AssignAnimationPose(int pose_i)
         {
             pose_i %= anim.numOriginalFrames;
-            int len = System.Math.Min(skeleton.bones.Length, anim.pose[pose_i].transforms.Length);
-            for (int i = 0; i < len; i++)
+            hkaPose pose = anim.pose[pose_i];
+            int nbones = System.Math.Min(skeleton.bones.Length, anim.pose[pose_i].transforms.Length);
+            for (int i = 0; i < nbones; i++)
             {
-                skeleton.bones[i].local = anim.pose[pose_i].transforms[i];
+                skeleton.bones[i].local = pose.transforms[i];
+            }
+        }
+
+        public void ApplyPatchToAnimation()
+        {
+            foreach (hkaPose pose in anim.pose)
+            {
+                int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
+                for (int i = 0; i < nbones; i++)
+                {
+                    pose.transforms[i] *= skeleton.bones[i].patch;
+                }
+            }
+            ClearPatch();
+            ClearCommands();
+        }
+
+        public void ClearPatch()
+        {
+            foreach (hkaBone bone in skeleton.bones)
+            {
+                bone.patch = new Transform();
             }
         }
 
@@ -261,8 +284,10 @@ namespace hkxPoser
         {
             string file = CreateTempFileName(dest_file);
 
-            anim.numOriginalFrames = 1;
-            anim.duration = 1.0f/30.0f;
+            ApplyPatchToAnimation();
+
+            //anim.numOriginalFrames = 1;
+            //anim.duration = 1.0f/30.0f;
             anim.Save(file);
 
             ProcessStartInfo info = new ProcessStartInfo(

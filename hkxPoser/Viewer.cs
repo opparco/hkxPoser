@@ -142,6 +142,8 @@ namespace hkxPoser
         hkaSkeleton skeleton;
         hkaAnimation anim;
 
+        public event EventHandler LoadAnimationEvent;
+
         void CreateViewport(ref System.Drawing.Size clientSize)
         {
             viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f);
@@ -199,19 +201,46 @@ namespace hkxPoser
             anim = new hkaAnimation();
             anim.Load(Path.Combine(Application.StartupPath, @"resources\idle.bin"));
 
-            AssignAnimationPose();
+            if (LoadAnimationEvent != null)
+                LoadAnimationEvent(this, EventArgs.Empty);
+
+            AssignAnimationPose(0);
 
             CreateDeviceIndependentResources();
 
             return true;
         }
 
-        public void AssignAnimationPose()
+        public void AssignAnimationPose(int pose_i)
         {
-            int len = System.Math.Min(skeleton.bones.Length, anim.transforms.Length);
-            for (int i = 0; i < len; i++)
+            pose_i %= anim.numOriginalFrames;
+            hkaPose pose = anim.pose[pose_i];
+            int nbones = System.Math.Min(skeleton.bones.Length, anim.pose[pose_i].transforms.Length);
+            for (int i = 0; i < nbones; i++)
             {
-                skeleton.bones[i].local = anim.transforms[i];
+                skeleton.bones[i].local = pose.transforms[i];
+            }
+        }
+
+        public void ApplyPatchToAnimation()
+        {
+            foreach (hkaPose pose in anim.pose)
+            {
+                int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
+                for (int i = 0; i < nbones; i++)
+                {
+                    pose.transforms[i] *= skeleton.bones[i].patch;
+                }
+            }
+            ClearPatch();
+            ClearCommands();
+        }
+
+        public void ClearPatch()
+        {
+            foreach (hkaBone bone in skeleton.bones)
+            {
+                bone.patch = new Transform();
             }
         }
 
@@ -243,7 +272,10 @@ namespace hkxPoser
             {
                 if (anim.Load(file))
                 {
-                    AssignAnimationPose();
+                    if (LoadAnimationEvent != null)
+                        LoadAnimationEvent(this, EventArgs.Empty);
+
+                    AssignAnimationPose(0);
                 }
             }
         }
@@ -252,8 +284,10 @@ namespace hkxPoser
         {
             string file = CreateTempFileName(dest_file);
 
-            anim.numOriginalFrames = 1;
-            anim.duration = 1.0f/30.0f;
+            ApplyPatchToAnimation();
+
+            //anim.numOriginalFrames = 1;
+            //anim.duration = 1.0f/30.0f;
             anim.Save(file);
 
             ProcessStartInfo info = new ProcessStartInfo(
@@ -269,11 +303,30 @@ namespace hkxPoser
 
         SimpleCamera camera = new SimpleCamera();
 
+        //int current_pose_i = 0;
+
+        public int GetNumFrames()
+        {
+            return anim.numOriginalFrames;
+        }
+
+        public void SetCurrentPose(int pose_i)
+        {
+            AssignAnimationPose(pose_i);
+        }
+
         public void Update()
         {
             camera.Update();
             view = camera.ViewMatrix;
             wvp = world * view * proj;
+
+            // run animation
+            /*
+            AssignAnimationPose(current_pose_i);
+            current_pose_i++;
+            current_pose_i %= anim.numOriginalFrames;
+            */
         }
 
         public void Render()
@@ -614,10 +667,10 @@ namespace hkxPoser
             if (bone == null)
                 return;
 
-            axis = Vector3.Transform(axis, bone.local.rotation);
+            axis = Vector3.Transform(axis, bone.local.rotation * bone.patch.rotation);
 
             float len = dx * 0.0125f;
-            bone.local.translation += axis * len;
+            bone.patch.translation += axis * len;
         }
 
         /// 選択boneを指定軸中心に回転します。
@@ -629,7 +682,7 @@ namespace hkxPoser
                 return;
 
             float angle = dx * 0.005f;
-            bone.local.rotation *= Quaternion.RotationAxis(axis, angle);
+            bone.patch.rotation *= Quaternion.RotationAxis(axis, angle);
         }
 
         public void Dispose()

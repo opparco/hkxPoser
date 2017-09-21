@@ -29,6 +29,14 @@ public class Transform
         this.scale = scale;
     }
 
+    public static Transform operator *(Transform t1, float amount)
+    {
+        return new Transform(
+            t1.translation * amount,
+            Quaternion.Slerp(Quaternion.Identity, t1.rotation, amount),
+            (float)Math.Pow(t1.scale, amount));
+    }
+
     public static Transform operator *(Transform t1, Transform t2)
     {
         return new Transform(

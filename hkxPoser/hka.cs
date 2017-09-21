@@ -178,6 +178,7 @@ public class hkaSkeleton
         // hide NPC Root
         this.bones[0].hide = true;
 
+#if false
         // hide since Camera3rd
         if (nbones != 1)
         {
@@ -190,6 +191,7 @@ public class hkaSkeleton
                 bone.hide = hide;
             }
         }
+#endif
 
         /// The reference pose for the bones of this skeleton. This pose is stored in local space.
         int nreferencePose = reader.ReadInt32();

@@ -37,7 +37,6 @@ namespace hkxPoser
         SolidColorBrush zaxisBrush;
 
         TextFormat textFormat;
-        TextLayout textLayout;
 
         Color textColor = Color.Black;
         Color boneLineColor = new ColorBGRA(100, 100, 230, 255);
@@ -71,7 +70,6 @@ namespace hkxPoser
                 zaxisBrush = new SolidColorBrush(renderTarget, zaxisColor);
 
                 textFormat = new TextFormat(dwriteFactory, "Verdana", FontWeight.Bold, FontStyle.Normal, 14.0f);
-                textLayout = new TextLayout(dwriteFactory, "Hello World!", textFormat, 400.0f, 200.0f);
             }
             return 0;
         }
@@ -80,7 +78,6 @@ namespace hkxPoser
         {
             if (renderTarget != null)
             {
-                textLayout?.Dispose();
                 textFormat?.Dispose();
 
                 zaxisBrush?.Dispose();
@@ -213,16 +210,16 @@ namespace hkxPoser
 
             world = Matrix.Identity;
 
+            string skel_file = Path.Combine(Application.StartupPath, @"resources\skeleton.bin");
             skeleton = new hkaSkeleton();
-            skeleton.Load(Path.Combine(Application.StartupPath, @"resources\skeleton.bin"));
+            skeleton.Load(skel_file);
 
+            string anim_file = Path.Combine(Application.StartupPath, @"resources\idle.bin");
             anim = new hkaAnimation();
-            anim.Load(Path.Combine(Application.StartupPath, @"resources\idle.bin"));
-
-            if (LoadAnimationEvent != null)
-                LoadAnimationEvent(this, EventArgs.Empty);
-
-            AssignAnimationPose(0);
+            if (anim.Load(anim_file))
+            {
+                LoadAnimationSuccessful(Path.ChangeExtension(anim_file, ".hkx"));
+            }
 
             CreateDeviceIndependentResources();
 
@@ -290,12 +287,21 @@ namespace hkxPoser
             {
                 if (anim.Load(file))
                 {
-                    if (LoadAnimationEvent != null)
-                        LoadAnimationEvent(this, EventArgs.Empty);
-
-                    AssignAnimationPose(0);
+                    LoadAnimationSuccessful(source_file);
                 }
             }
+        }
+
+        string anim_filename = "idle.hkx";
+
+        void LoadAnimationSuccessful(string source_file)
+        {
+            this.anim_filename = Path.GetFileName(source_file);
+
+            if (LoadAnimationEvent != null)
+                LoadAnimationEvent(this, EventArgs.Empty);
+
+            AssignAnimationPose(0);
         }
 
         public void SaveAnimation(string dest_file)
@@ -361,7 +367,7 @@ namespace hkxPoser
             DrawBoneTree();
             DrawSelectedBone();
 
-            DrawText();
+            DrawText(ref size);
 
             try
             {
@@ -376,10 +382,9 @@ namespace hkxPoser
             swapChain.Present(0, PresentFlags.None);
         }
 
-        void DrawText()
+        void DrawText(ref Size2 size)
         {
-            renderTarget.DrawText("Hello World!", textFormat, new RectangleF(50, 50, 200, 200), textBrush);
-            renderTarget.DrawTextLayout(new Vector2(300, 350), textLayout, textBrush);
+            renderTarget.DrawText(string.Format("File: {0}", this.anim_filename), textFormat, new RectangleF(12, size.Height-12-45-20, 240, 20), textBrush);
         }
 
         void DrawLine(Vector3 p0, Vector3 p1, Brush brush)

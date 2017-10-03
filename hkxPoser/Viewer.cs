@@ -384,7 +384,7 @@ namespace hkxPoser
 
         void DrawText(ref Size2 size)
         {
-            renderTarget.DrawText(string.Format("File: {0}", this.anim_filename), textFormat, new RectangleF(12, size.Height-12-45-20, 240, 20), textBrush);
+            renderTarget.DrawText(string.Format("File: {0}", this.anim_filename), textFormat, new RectangleF(12, size.Height-12-45-20, size.Width-24, 20), textBrush);
         }
 
         void DrawLine(Vector3 p0, Vector3 p1, Brush brush)

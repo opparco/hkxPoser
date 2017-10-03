@@ -11,6 +11,8 @@ using SharpDX.DXGI;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.Direct2D1;
+using SharpDX.DirectWrite;
+
 using System.Windows.Forms;
 
 namespace hkxPoser
@@ -23,14 +25,21 @@ namespace hkxPoser
         SwapChain swapChain;
 
         SharpDX.Direct2D1.Factory d2dFactory;
+        SharpDX.DirectWrite.Factory dwriteFactory;
 
         RenderTarget renderTarget;
+
+        SolidColorBrush textBrush;
         SolidColorBrush boneLineBrush;
         SolidColorBrush selectedBoneLineBrush;
         SolidColorBrush xaxisBrush;
         SolidColorBrush yaxisBrush;
         SolidColorBrush zaxisBrush;
 
+        TextFormat textFormat;
+        TextLayout textLayout;
+
+        Color textColor = Color.Black;
         Color boneLineColor = new ColorBGRA(100, 100, 230, 255);
         Color selectedBoneLineColor = new ColorBGRA(255, 0, 0, 255);
         Color xaxisColor = new ColorBGRA(255, 0, 0, 255);
@@ -40,6 +49,7 @@ namespace hkxPoser
         int CreateDeviceIndependentResources()
         {
             d2dFactory = new SharpDX.Direct2D1.Factory();
+            dwriteFactory = new SharpDX.DirectWrite.Factory();
 
             return 0;
         }
@@ -53,11 +63,15 @@ namespace hkxPoser
                     renderTarget = new RenderTarget(d2dFactory, sf, new RenderTargetProperties(new PixelFormat(Format.Unknown, SharpDX.Direct2D1.AlphaMode.Premultiplied)));
                 }
 
+                textBrush = new SolidColorBrush(renderTarget, textColor);
                 boneLineBrush = new SolidColorBrush(renderTarget, boneLineColor);
                 selectedBoneLineBrush = new SolidColorBrush(renderTarget, selectedBoneLineColor);
                 xaxisBrush = new SolidColorBrush(renderTarget, xaxisColor);
                 yaxisBrush = new SolidColorBrush(renderTarget, yaxisColor);
                 zaxisBrush = new SolidColorBrush(renderTarget, zaxisColor);
+
+                textFormat = new TextFormat(dwriteFactory, "Verdana", FontWeight.Bold, FontStyle.Normal, 14.0f);
+                textLayout = new TextLayout(dwriteFactory, "Hello World!", textFormat, 400.0f, 200.0f);
             }
             return 0;
         }
@@ -66,11 +80,15 @@ namespace hkxPoser
         {
             if (renderTarget != null)
             {
+                textLayout?.Dispose();
+                textFormat?.Dispose();
+
                 zaxisBrush?.Dispose();
                 yaxisBrush?.Dispose();
                 xaxisBrush?.Dispose();
                 selectedBoneLineBrush?.Dispose();
                 boneLineBrush?.Dispose();
+                textBrush?.Dispose();
 
                 renderTarget.Dispose();
                 renderTarget = null;
@@ -343,6 +361,8 @@ namespace hkxPoser
             DrawBoneTree();
             DrawSelectedBone();
 
+            DrawText();
+
             try
             {
                 renderTarget.EndDraw();
@@ -354,6 +374,12 @@ namespace hkxPoser
             }
 
             swapChain.Present(0, PresentFlags.None);
+        }
+
+        void DrawText()
+        {
+            renderTarget.DrawText("Hello World!", textFormat, new RectangleF(50, 50, 200, 200), textBrush);
+            renderTarget.DrawTextLayout(new Vector2(300, 350), textLayout, textBrush);
         }
 
         void DrawLine(Vector3 p0, Vector3 p1, Brush brush)

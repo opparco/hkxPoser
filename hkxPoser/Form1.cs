@@ -76,5 +76,20 @@ namespace hkxPoser
         {
             viewer.SetCurrentPose(trackBar1.Value);
         }
+
+        private void Form1_DragDrop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                foreach (string source_file in (string[])e.Data.GetData(DataFormats.FileDrop))
+                    viewer.LoadAnimation(source_file);
+            }
+        }
+
+        private void Form1_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effect = DragDropEffects.Move;
+        }
     }
 }

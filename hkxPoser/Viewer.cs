@@ -230,7 +230,7 @@ namespace hkxPoser
         {
             pose_i %= anim.numOriginalFrames;
             hkaPose pose = anim.pose[pose_i];
-            int nbones = System.Math.Min(skeleton.bones.Length, anim.pose[pose_i].transforms.Length);
+            int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
             for (int i = 0; i < nbones; i++)
             {
                 skeleton.bones[i].local = pose.transforms[i];

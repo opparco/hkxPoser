@@ -274,10 +274,11 @@ public class hkaAnimation
 {
     public int numOriginalFrames;
     public float duration;
-    //public int numTransforms;
-    //public int numFloats;
 
     public hkaPose[] pose;
+
+    public int numTransforms { get { return pose[0].transforms.Length; } }
+    public int numFloats { get { return pose[0].floats.Length; } }
 
     /// load anim.bin
     public bool Load(string filename)
@@ -366,11 +367,8 @@ public class hkaAnimation
         writer.Write(this.numOriginalFrames);
         writer.Write(this.duration);
 
-        int numTransforms = this.pose[0].transforms.Length;
-        int numFloats = this.pose[0].floats.Length;
-
-        writer.Write(numTransforms);
-        writer.Write(numFloats);
+        writer.Write(this.numTransforms);
+        writer.Write(this.numFloats);
 
         for (int i = 0; i < numOriginalFrames; i++)
         {

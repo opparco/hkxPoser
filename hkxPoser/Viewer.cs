@@ -226,10 +226,10 @@ namespace hkxPoser
             return true;
         }
 
-        public void AssignAnimationPose(int pose_i)
+        public void AssignAnimationPose(int idx)
         {
-            pose_i %= anim.numOriginalFrames;
-            hkaPose pose = anim.pose[pose_i];
+            idx %= anim.numOriginalFrames;
+            hkaPose pose = anim.pose[idx];
             int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
             for (int i = 0; i < nbones; i++)
             {

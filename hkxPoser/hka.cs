@@ -129,7 +129,7 @@ public class hkaSkeleton
         {
             string head = reader.ReadHeaderString();
             uint version = reader.ReadUInt32();
-            // should be 0x01000000
+            // should be 0x01000200
             int nskeletons = reader.ReadInt32();
             // should be 1 or 2
             Read(reader);
@@ -270,12 +270,31 @@ public class hkaPose
     }
 }
 
+public class Annotation
+{
+    public float time;
+    public string text;
+
+    public void Read(BinaryReader reader)
+    {
+        this.time = reader.ReadSingle();
+        this.text = reader.ReadCString();
+    }
+
+    public void Write(BinaryWriter writer)
+    {
+        writer.Write(this.time);
+        writer.WriteCString(this.text);
+    }
+}
+
 public class hkaAnimation
 {
     public int numOriginalFrames;
     public float duration;
 
     public hkaPose[] pose;
+    public Annotation[] annotations;
 
     public int numTransforms { get { return pose[0].transforms.Length; } }
     public int numFloats { get { return pose[0].floats.Length; } }
@@ -294,7 +313,7 @@ public class hkaAnimation
             string head = reader.ReadHeaderString();
             //TODO: throw exception
             uint version = reader.ReadUInt32();
-            if (version != 0x01000000)
+            if (version != 0x01000200)
             {
 		Console.WriteLine("Error: version mismatch! Abort.");
                 return false;
@@ -335,6 +354,18 @@ public class hkaAnimation
             this.pose[i] = new hkaPose();
             this.pose[i].Read(reader, numTransforms, numFloats);
         }
+
+        /// The annotation tracks associated with this skeletal animation.
+
+        int numAnnotationTracks = reader.ReadInt32();
+        int numAnnotations = reader.ReadInt32();
+
+        this.annotations = new Annotation[numAnnotations];
+        for (int i = 0; i < numAnnotations; i++)
+        {
+            this.annotations[i] = new Annotation();
+            this.annotations[i].Read(reader);
+        }
     }
 
     /// save anim.bin
@@ -348,8 +379,8 @@ public class hkaAnimation
     {
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
         {
-            string head = "hkdump File Format, Version 1.0.0.0";
-            uint version = 0x01000000;
+            string head = "hkdump File Format, Version 1.0.2.0";
+            uint version = 0x01000200;
             int nskeletons = 0;
             int nanimations = 1;
 
@@ -373,6 +404,16 @@ public class hkaAnimation
         for (int i = 0; i < numOriginalFrames; i++)
         {
             this.pose[i].Write(writer);
+        }
+
+        int numAnnotationTracks = this.numTransforms; // why
+        writer.Write(numAnnotationTracks);
+        int numAnnotations = this.annotations.Length;
+        writer.Write(numAnnotations);
+
+        for (int i = 0; i < numAnnotations; i++)
+        {
+            this.annotations[i].Write(writer);
         }
     }
 }

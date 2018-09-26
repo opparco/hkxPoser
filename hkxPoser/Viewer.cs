@@ -251,7 +251,7 @@ namespace hkxPoser
                 }
             }
             ClearPatch();
-            ClearCommands();
+            command_man.ClearCommands();
         }
 
         public void ClearPatch()
@@ -330,8 +330,6 @@ namespace hkxPoser
 
         SimpleCamera camera = new SimpleCamera();
 
-        //int current_pose_i = 0;
-
         public int GetNumFrames()
         {
             return anim.numOriginalFrames;
@@ -347,13 +345,6 @@ namespace hkxPoser
             camera.Update();
             view = camera.ViewMatrix;
             wvp = world * view * proj;
-
-            // run animation
-            /*
-            AssignAnimationPose(current_pose_i);
-            current_pose_i++;
-            current_pose_i %= anim.numOriginalFrames;
-            */
         }
 
         public void Render()
@@ -606,75 +597,13 @@ namespace hkxPoser
             return found;
         }
 
-        /// 操作リスト
-        public List<ICommand> commands = new List<ICommand>();
-        int command_id = 0;
-
-        /// 指定操作を実行します。
-        public void Execute(ICommand command)
-        {
-            if (command.Execute())
-            {
-                if (command_id == commands.Count)
-                    commands.Add(command);
-                else
-                    commands[command_id] = command;
-                command_id++;
-            }
-        }
-
-        /// 操作を消去します。
-        public void ClearCommands()
-        {
-            commands.Clear();
-            command_id = 0;
-        }
-
-        /// ひとつ前の操作による変更を元に戻せるか。
-        public bool CanUndo()
-        {
-            return (command_id > 0);
-        }
-
-        /// ひとつ前の操作による変更を元に戻します。
-        public void Undo()
-        {
-            if (!CanUndo())
-                return;
-
-            command_id--;
-            Undo(commands[command_id]);
-        }
-
-        /// 指定操作による変更を元に戻します。
-        public void Undo(ICommand command)
-        {
-            command.Undo();
-        }
-
-        /// ひとつ前の操作による変更をやり直せるか。
-        public bool CanRedo()
-        {
-            return (command_id < commands.Count);
-        }
-
-        /// ひとつ前の操作による変更をやり直します。
-        public void Redo()
-        {
-            if (!CanRedo())
-                return;
-
-            Redo(commands[command_id]);
-            command_id++;
-        }
-
-        /// 指定操作による変更をやり直します。
-        public void Redo(ICommand command)
-        {
-            command.Redo();
-        }
-
+        public CommandManager command_man { get; }
         BoneCommand bone_command = null;
+
+        public Viewer()
+        {
+            command_man = new CommandManager();
+        }
 
         /// bone操作を開始します。
         public void BeginBoneCommand()
@@ -695,7 +624,7 @@ namespace hkxPoser
         public void EndBoneCommand()
         {
             if (bone_command != null)
-                Execute(bone_command);
+                command_man.Execute(bone_command);
 
             bone_command = null;
         }

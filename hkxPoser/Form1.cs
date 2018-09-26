@@ -39,12 +39,12 @@ namespace hkxPoser
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            viewer.Undo();
+            viewer.command_man.Undo();
         }
 
         private void redoToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            viewer.Redo();
+            viewer.command_man.Redo();
         }
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)

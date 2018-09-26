@@ -22,7 +22,10 @@ namespace hkxPoser
         Control control;
 
         SharpDX.Direct3D11.Device device;
+        SharpDX.DXGI.Factory1 factory1;
         SwapChain swapChain;
+
+        Renderer3d renderer3d;
 
         SharpDX.Direct2D1.Factory d2dFactory;
         SharpDX.DirectWrite.Factory dwriteFactory;
@@ -173,6 +176,8 @@ namespace hkxPoser
 
         protected void form_Resize(object sender, EventArgs e)
         {
+            System.Console.WriteLine("Viewer.form_Resize");
+
             DiscardDeviceResources();
 
             SwapChainDescription desc = swapChain.Description;
@@ -181,6 +186,25 @@ namespace hkxPoser
             swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
 
             CreateViewport(ref clientSize);
+
+            renderer3d.OnUserResized(control, swapChain);
+        }
+
+        static SampleDescription DetectSampleDescription(SharpDX.Direct3D11.Device device, Format format)
+        {
+            var desc = new SampleDescription();
+            for (int sampleCount = SharpDX.Direct3D11.Device.MultisampleCountMaximum; sampleCount > 0; --sampleCount)
+            {
+                int qualiryLevels = device.CheckMultisampleQualityLevels(format, sampleCount);
+                if (qualiryLevels > 0)
+                {
+                    desc.Count = sampleCount;
+                    desc.Quality = qualiryLevels - 1;
+                    break;
+                }
+            }
+            Console.WriteLine("sample count {0} quality {1}", desc.Count, desc.Quality);
+            return desc;
         }
 
         public bool InitializeGraphics(Control control)
@@ -192,20 +216,23 @@ namespace hkxPoser
 
             System.Drawing.Size clientSize = control.ClientSize;
 
-            // SwapChain description
-            var desc = new SwapChainDescription()
-            {
-                BufferCount = 1,
-                ModeDescription = new ModeDescription(clientSize.Width, clientSize.Height, new Rational(60, 1), Format.R8G8B8A8_UNorm),
-                IsWindowed = true,
-                OutputHandle = control.Handle,
-                SampleDescription = new SampleDescription(1, 0),
-                SwapEffect = SwapEffect.Discard,
-                Usage = Usage.RenderTargetOutput
-            };
-
             // Create Device and SwapChain
-            SharpDX.Direct3D11.Device.CreateWithSwapChain(DriverType.Hardware, DeviceCreationFlags.BgraSupport, new SharpDX.Direct3D.FeatureLevel[] { SharpDX.Direct3D.FeatureLevel.Level_10_0 }, desc, out device, out swapChain);
+            device = new SharpDX.Direct3D11.Device(DriverType.Hardware, DeviceCreationFlags.BgraSupport, new SharpDX.Direct3D.FeatureLevel[] { SharpDX.Direct3D.FeatureLevel.Level_10_0 });
+
+            factory1 = new SharpDX.DXGI.Factory1();
+            swapChain = new SwapChain(factory1, device, new SwapChainDescription()
+            {
+                ModeDescription = new ModeDescription(clientSize.Width, clientSize.Height, new Rational(60, 1), Format.R8G8B8A8_UNorm),
+                SampleDescription = DetectSampleDescription(device, Format.D32_Float_S8X24_UInt),
+                Usage = Usage.RenderTargetOutput,
+                BufferCount = 1,
+                OutputHandle = control.Handle,
+                IsWindowed = true,
+                SwapEffect = SwapEffect.Discard
+            });
+            // Ignore all windows events
+            factory1.MakeWindowAssociation(control.Handle, WindowAssociationFlags.IgnoreAll);
+
             CreateViewport(ref clientSize);
 
             world = Matrix.Identity;
@@ -221,6 +248,9 @@ namespace hkxPoser
                 string source_file = Path.ChangeExtension(anim_file, ".hkx");
                 LoadAnimationSuccessful(source_file);
             }
+
+            renderer3d.InitializeGraphics(device, skeleton);
+            renderer3d.OnUserResized(control, swapChain);
 
             CreateDeviceIndependentResources();
 
@@ -345,16 +375,20 @@ namespace hkxPoser
             camera.Update();
             view = camera.ViewMatrix;
             wvp = world * view * proj;
+
+            renderer3d.Update(ref wvp);
         }
 
         public void Render()
         {
+            renderer3d.Render();
+
             Size2 size = new Size2(viewport.Width, viewport.Height);
 
             CreateDeviceResources(ref size);
 
             renderTarget.BeginDraw();
-            renderTarget.Clear(new Color(192, 192, 192, 255));
+            //renderTarget.Clear(new Color(192, 192, 192, 255));
 
             DrawMesh();
             DrawCenterAxis();
@@ -602,6 +636,7 @@ namespace hkxPoser
 
         public Viewer()
         {
+            renderer3d = new Renderer3d();
             command_man = new CommandManager();
         }
 
@@ -657,12 +692,17 @@ namespace hkxPoser
 
         public void Dispose()
         {
-            /*
-            dot_texture?.Dispose();
-            sprite?.Dispose();
-            */
+            System.Console.WriteLine("Viewer.Dispose");
+
+            DiscardDeviceResources();
+            renderer3d.Dispose();
+
             swapChain?.Dispose();
+            swapChain = null;
+            factory1?.Dispose();
+            factory1 = null;
             device?.Dispose();
+            device = null;
         }
     }
 }

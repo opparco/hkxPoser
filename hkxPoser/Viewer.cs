@@ -121,13 +121,13 @@ namespace hkxPoser
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    camera.Move(dx, -dy, 0.0f);
+                    camera.Move(dx * 0.01f, -dy * 0.01f);
                     break;
                 case MouseButtons.Middle:
-                    camera.MoveView(-dx * 0.3125f, dy * 0.3125f);
+                    camera.MoveView(-dx * 0.3125f, dy * 0.3125f, 0.0f);
                     break;
                 case MouseButtons.Right:
-                    camera.Move(0.0f, 0.0f, -dy * 0.3125f);
+                    camera.MoveView(0.0f, 0.0f, -dy * 0.3125f);
                     break;
             }
 

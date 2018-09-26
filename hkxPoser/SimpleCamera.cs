@@ -4,7 +4,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using SharpDX;
-using SharpDX.Direct3D11;
+using SharpDX.Direct3D;
 
 /// <summary>
 /// カメラ
@@ -23,20 +23,11 @@ public class SimpleCamera
     //カメラ移動方向ベクトル
     Vector3 dirD;
 
-    //カメラ奥行オフセット値
-    float zD;
-
     //更新する必要があるか
     bool needUpdate;
 
     //view行列
     Matrix view;
-
-    //Z軸回転差分
-    float rotZD;
-
-    //移動時回転単位（ラジアン）
-    float angleU;
 
     /// <summary>
     /// 角度
@@ -68,12 +59,9 @@ public class SimpleCamera
     /// </summary>
     public SimpleCamera()
     {
-        dirD = Vector3.Zero;
-        zD = 0.0f;
-        view = Matrix.Identity;
-        rotZD = 0.0f;
-        angleU = 0.01f;
         Reset();
+        dirD = Vector3.Zero;
+        view = Matrix.Identity;
     }
 
     /// <summary>
@@ -91,7 +79,8 @@ public class SimpleCamera
     /// </summary>
     public void ResetTranslation()
     {
-        translation = new Vector3(0.0f, 68.9113f, 280.0f); // screen center is "NPC COM [COM ]"
+        // screen center is "NPC COM [COM ]"
+        translation = new Vector3(0.0f, 68.9113f, 280.0f);
         needUpdate = true;
     }
 
@@ -100,28 +89,13 @@ public class SimpleCamera
     /// </summary>
     /// <param name="dirX">移動方向（経度）</param>
     /// <param name="dirY">移動方向（緯度）</param>
-    /// <param name="dirZ">移動方向（奥行）</param>
-    public void Move(float dirX, float dirY, float dirZ)
+    public void Move(float dirX, float dirY)
     {
-        if (dirX == 0.0f && dirY == 0.0f && dirZ == 0.0f)
+        if (dirX == 0.0f && dirY == 0.0f)
             return;
 
         dirD.X += dirX;
         dirD.Y += dirY;
-        this.zD += dirZ;
-        needUpdate = true;
-    }
-
-    /// <summary>
-    /// カメラをZ軸回転します。
-    /// </summary>
-    /// <param name="angle">回転角度（ラジアン）</param>
-    public void RotZ(float angle)
-    {
-        if (angle == 0.0f)
-            return;
-
-        rotZD = angle;
         needUpdate = true;
     }
 
@@ -133,14 +107,11 @@ public class SimpleCamera
         if (!needUpdate)
             return;
 
-        angle.Y += +rotZD;
-        angle.X += angleU * +dirD.Y;
-        angle.Z += angleU * -dirD.X;
-        this.translation.Z += zD;
+        angle.X += +dirD.Y;
+        angle.Z += -dirD.X;
 
         Matrix m;
         GetRotation(out m);
-
         m.M41 = center.X;
         m.M42 = center.Y;
         m.M43 = center.Z;
@@ -201,17 +172,11 @@ public class SimpleCamera
         SetTranslation(new Vector3(x, y, z));
     }
 
-    public void GetRotation(out Matrix m)
-    {
-        m = Matrix.RotationY(angle.Y) * Matrix.RotationX(angle.X) * Matrix.RotationZ(angle.Z);
-    }
-
     /// centerを変更してもviewを維持できるようにtranslationを更新する。
     public void UpdateTranslation()
     {
         Matrix m;
         GetRotation(out m);
-
         m.M41 = center.X;
         m.M42 = center.Y;
         m.M43 = center.Z;
@@ -221,6 +186,12 @@ public class SimpleCamera
 
         Vector3 t = new Vector3(m.M41, m.M42, m.M43);
         this.translation = -t;
+        needUpdate = true;
+    }
+
+    public void GetRotation(out Matrix m)
+    {
+        m = Matrix.RotationY(angle.Y) * Matrix.RotationX(angle.X) * Matrix.RotationZ(angle.Z);
     }
 
     /// <summary>
@@ -248,10 +219,12 @@ public class SimpleCamera
     /// </summary>
     /// <param name="dx">X軸移動距離</param>
     /// <param name="dy">Y軸移動距離</param>
-    public void MoveView(float dx, float dy)
+    /// <param name="dz">Z軸移動距離</param>
+    public void MoveView(float dx, float dy, float dz)
     {
         this.translation.X += dx;
         this.translation.Y += dy;
+        this.translation.Z += dz;
         needUpdate = true;
     }
 
@@ -261,7 +234,5 @@ public class SimpleCamera
     protected void ResetDefValue()
     {
         dirD = Vector3.Zero;
-        zD = 0.0f;
-        rotZD = 0.0f;
     }
 }

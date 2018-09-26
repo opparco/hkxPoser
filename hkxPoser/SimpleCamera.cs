@@ -203,7 +203,7 @@ public class SimpleCamera
 
     public void GetRotation(out Matrix m)
     {
-        m = Matrix.RotationX(angle.X) * Matrix.RotationY(angle.Y) * Matrix.RotationZ(angle.Z);
+        m = Matrix.RotationY(angle.Y) * Matrix.RotationX(angle.X) * Matrix.RotationZ(angle.Z);
     }
 
     /// centerを変更してもviewを維持できるようにtranslationを更新する。

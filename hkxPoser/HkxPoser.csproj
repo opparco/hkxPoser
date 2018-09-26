@@ -63,8 +63,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BinaryReaderMethods.cs" />
-    <Compile Include="BinaryWriterMethods.cs" />
+    <Compile Include="extensions\BinaryReaderMethods.cs" />
+    <Compile Include="extensions\BinaryWriterMethods.cs" />
     <Compile Include="BoneCommand.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>

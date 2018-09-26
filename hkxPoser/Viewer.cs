@@ -218,7 +218,8 @@ namespace hkxPoser
             anim = new hkaAnimation();
             if (anim.Load(anim_file))
             {
-                LoadAnimationSuccessful(Path.ChangeExtension(anim_file, ".hkx"));
+                string source_file = Path.ChangeExtension(anim_file, ".hkx");
+                LoadAnimationSuccessful(source_file);
             }
 
             CreateDeviceIndependentResources();
@@ -228,7 +229,9 @@ namespace hkxPoser
 
         public void AssignAnimationPose(int idx)
         {
-            idx %= anim.numOriginalFrames;
+            if (anim.numOriginalFrames > 1)
+                // loop animation. not pose.
+                idx %= anim.numOriginalFrames - 1;
             hkaPose pose = anim.pose[idx];
             int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
             for (int i = 0; i < nbones; i++)
@@ -362,6 +365,7 @@ namespace hkxPoser
             renderTarget.BeginDraw();
             renderTarget.Clear(new Color(192, 192, 192, 255));
 
+            DrawMesh();
             DrawCenterAxis();
 
             DrawBoneTree();
@@ -407,6 +411,12 @@ namespace hkxPoser
             DrawLine(scr_center, scr_xaxis, xaxisBrush);
             DrawLine(scr_center, scr_yaxis, yaxisBrush);
             DrawLine(scr_center, scr_zaxis, zaxisBrush);
+        }
+
+        //TODO: draw NiTriShape as mesh
+        void DrawMesh()
+        {
+            // Draw the mesh
         }
 
         /// <summary>

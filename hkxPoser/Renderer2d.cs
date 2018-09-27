@@ -98,7 +98,6 @@ namespace hkxPoser
             CreateDeviceResources(swapChain, ref size);
 
             renderTarget.BeginDraw();
-            //renderTarget.Clear(new Color(192, 192, 192, 255));
 
             DrawCenterAxis();
 

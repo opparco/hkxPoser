@@ -222,7 +222,7 @@ namespace hkxPoser
         {
             // Clear views
             context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            context.ClearRenderTargetView(renderView, Color.Black);
+            context.ClearRenderTargetView(renderView, new Color(192, 192, 192, 255));
 
             foreach (NiFile nif in nifs)
             foreach (Mesh mesh in nif.meshes)

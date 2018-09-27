@@ -28,8 +28,8 @@ namespace hkxPoser
         TextureCollection textureCollection;
         BoneMapCollection boneMapCollection;
 
-        RenderTargetView renderView;
         DepthStencilView depthView;
+        RenderTargetView renderView;
 
         hkaSkeleton skeleton;
         List<NiFile> nifs = new List<NiFile>();
@@ -54,8 +54,7 @@ namespace hkxPoser
             if (context != null)
             {
                 // device resources
-                depthView?.Dispose();
-                renderView?.Dispose();
+                DiscardDeviceResources();
 
                 textureCollection?.Dispose();
                 textureLoader?.Dispose();
@@ -175,42 +174,42 @@ namespace hkxPoser
                 boneMapCollection.SetBoneMap(mesh);
         }
 
-        public void OnUserResized(SwapChain swapChain, ref Viewport viewport)
+        public void DiscardDeviceResources()
         {
-            System.Console.WriteLine("Renderer3d.OnUserResized");
-
             // Dispose all previous allocated resources
-            Utilities.Dispose(ref depthView);
             Utilities.Dispose(ref renderView);
+            Utilities.Dispose(ref depthView);
+        }
 
-            SwapChainDescription desc = swapChain.Description;
-            swapChain.ResizeBuffers(desc.BufferCount, viewport.Width, viewport.Height, desc.ModeDescription.Format, desc.Flags);
-
-            using (var resource = Texture2D.FromSwapChain<Texture2D>(swapChain, 0))
+        public void CreateDeviceResources(SwapChain swapChain, ref Viewport viewport)
+        {
+            if (depthView == null && renderView == null)
             {
-                renderView = new RenderTargetView(device, resource);
+                using (var resource = new Texture2D(device, new Texture2DDescription()
+                {
+                    Format = Format.D32_Float_S8X24_UInt,
+                    ArraySize = 1,
+                    MipLevels = 1,
+                    Width = viewport.Width,
+                    Height = viewport.Height,
+                    SampleDescription = swapChain.Description.SampleDescription,
+                    Usage = ResourceUsage.Default,
+                    BindFlags = BindFlags.DepthStencil,
+                    CpuAccessFlags = CpuAccessFlags.None,
+                    OptionFlags = ResourceOptionFlags.None
+                }))
+                {
+                    depthView = new DepthStencilView(device, resource);
+                }
+
+                using (var resource = Texture2D.FromSwapChain<Texture2D>(swapChain, 0))
+                {
+                    renderView = new RenderTargetView(device, resource);
+                }
+
+                context.Rasterizer.SetViewport(viewport);
+                context.OutputMerger.SetTargets(depthView, renderView);
             }
-
-            using (var resource = new Texture2D(device, new Texture2DDescription()
-            {
-                Format = Format.D32_Float_S8X24_UInt,
-                ArraySize = 1,
-                MipLevels = 1,
-                Width = viewport.Width,
-                Height = viewport.Height,
-                SampleDescription = swapChain.Description.SampleDescription,
-                Usage = ResourceUsage.Default,
-                BindFlags = BindFlags.DepthStencil,
-                CpuAccessFlags = CpuAccessFlags.None,
-                OptionFlags = ResourceOptionFlags.None
-            }))
-            {
-                depthView = new DepthStencilView(device, resource);
-            }
-
-            // Setup targets and viewport for rendering
-            context.Rasterizer.SetViewport(viewport);
-            context.OutputMerger.SetTargets(depthView, renderView);
         }
 
         public void Update(ref Matrix wvp)

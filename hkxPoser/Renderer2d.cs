@@ -40,7 +40,7 @@ namespace hkxPoser
             dwriteFactory = new SharpDX.DirectWrite.Factory();
         }
 
-        public void CreateDeviceResources(SwapChain swapChain, ref Size2 size)
+        public void CreateDeviceResources(SwapChain swapChain)
         {
             if (renderTarget == null)
             {
@@ -95,7 +95,7 @@ namespace hkxPoser
         {
             Size2 size = new Size2(viewport.Width, viewport.Height);
 
-            CreateDeviceResources(swapChain, ref size);
+            CreateDeviceResources(swapChain);
 
             renderTarget.BeginDraw();
 

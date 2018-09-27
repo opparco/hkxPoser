@@ -82,7 +82,6 @@ namespace hkxPoser
 
         Viewport viewport;
 
-        Matrix world;
         Matrix view;
         Matrix proj;
         Matrix wvp;
@@ -93,7 +92,7 @@ namespace hkxPoser
 
         public event EventHandler LoadAnimationEvent;
 
-        void CreateViewport(ref System.Drawing.Size clientSize)
+        void CreateViewportAndProjection(ref System.Drawing.Size clientSize)
         {
             viewport = new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f);
 
@@ -110,13 +109,15 @@ namespace hkxPoser
             System.Console.WriteLine("Viewer.form_Resize");
 
             renderer2d.DiscardDeviceResources();
+            renderer3d.DiscardDeviceResources();
 
             System.Drawing.Size clientSize = control.ClientSize;
+            CreateViewportAndProjection(ref clientSize);
 
-            CreateViewport(ref clientSize);
+            SwapChainDescription desc = swapChain.Description;
+            swapChain.ResizeBuffers(desc.BufferCount, viewport.Width, viewport.Height, desc.ModeDescription.Format, desc.Flags);
 
-            //TODO: discard resources
-            renderer3d.OnUserResized(swapChain, ref viewport);
+            renderer3d.CreateDeviceResources(swapChain, ref viewport);
         }
 
         static SampleDescription DetectSampleDescription(SharpDX.Direct3D11.Device device, Format format)
@@ -162,9 +163,7 @@ namespace hkxPoser
             // Ignore all windows events
             factory1.MakeWindowAssociation(control.Handle, WindowAssociationFlags.IgnoreAll);
 
-            CreateViewport(ref clientSize);
-
-            world = Matrix.Identity;
+            CreateViewportAndProjection(ref clientSize);
 
             string skel_file = Path.Combine(Application.StartupPath, @"resources\skeleton.bin");
             skeleton = new hkaSkeleton();
@@ -179,8 +178,7 @@ namespace hkxPoser
             }
 
             renderer3d.InitializeGraphics(device, skeleton);
-            //TODO: create resources
-            renderer3d.OnUserResized(swapChain, ref viewport);
+            renderer3d.CreateDeviceResources(swapChain, ref viewport);
 
             renderer2d.CreateDeviceIndependentResources(skeleton);
 

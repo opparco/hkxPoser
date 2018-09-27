@@ -237,7 +237,7 @@ namespace hkxPoser
                         if (hkabone_idx != -1)
                             UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(submesh.bones[i]), out bone_matrices[i]);
                         else
-                            bone_matrices[i] = Matrix.Identity;
+                            bone_matrices[i] = Matrix.Zero;
                     }
                     context.UpdateSubresource<Matrix>(bone_matrices, cb_mat);
                     shader_flags[0] = mesh.SLSF1;

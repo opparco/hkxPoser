@@ -187,7 +187,7 @@ namespace hkxPoser
 
             CreateViewport(ref clientSize);
 
-            renderer3d.OnUserResized(control, swapChain);
+            renderer3d.OnUserResized(swapChain, ref clientSize);
         }
 
         static SampleDescription DetectSampleDescription(SharpDX.Direct3D11.Device device, Format format)
@@ -250,7 +250,7 @@ namespace hkxPoser
             }
 
             renderer3d.InitializeGraphics(device, skeleton);
-            renderer3d.OnUserResized(control, swapChain);
+            renderer3d.OnUserResized(swapChain, ref clientSize);
 
             CreateDeviceIndependentResources();
 
@@ -697,12 +697,9 @@ namespace hkxPoser
             DiscardDeviceResources();
             renderer3d.Dispose();
 
-            swapChain?.Dispose();
-            swapChain = null;
-            factory1?.Dispose();
-            factory1 = null;
-            device?.Dispose();
-            device = null;
+            Utilities.Dispose(ref swapChain);
+            Utilities.Dispose(ref factory1);
+            Utilities.Dispose(ref device);
         }
     }
 }

@@ -18,8 +18,6 @@ namespace hkxPoser
     public class Renderer3d
     {
         Device device;
-        //Factory1 factory1;
-        //SwapChain swapChain;
         DeviceContext context;
 
         Buffer cb_wvp;
@@ -76,9 +74,6 @@ namespace hkxPoser
                 context.Dispose();
                 context = null;
             }
-            //swapChain.Dispose();
-            //factory1.Dispose();
-            //device.Dispose();
             skeleton = null;
             device = null;
         }
@@ -180,11 +175,9 @@ namespace hkxPoser
                 boneMapCollection.SetBoneMap(mesh);
         }
 
-        public void OnUserResized(Control control, SwapChain swapChain)
+        public void OnUserResized(SwapChain swapChain, ref System.Drawing.Size clientSize)
         {
             System.Console.WriteLine("Renderer3d.OnUserResized");
-
-            System.Drawing.Size clientSize = control.ClientSize;
 
             // Dispose all previous allocated resources
             Utilities.Dispose(ref depthView);

@@ -180,10 +180,7 @@ namespace hkxPoser
 
             DiscardDeviceResources();
 
-            SwapChainDescription desc = swapChain.Description;
             System.Drawing.Size clientSize = control.ClientSize;
-
-            swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
 
             CreateViewport(ref clientSize);
 

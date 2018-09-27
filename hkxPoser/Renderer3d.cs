@@ -183,6 +183,9 @@ namespace hkxPoser
             Utilities.Dispose(ref depthView);
             Utilities.Dispose(ref renderView);
 
+            SwapChainDescription desc = swapChain.Description;
+            swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
+
             using (var resource = Texture2D.FromSwapChain<Texture2D>(swapChain, 0))
             {
                 renderView = new RenderTargetView(device, resource);

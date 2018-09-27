@@ -175,7 +175,7 @@ namespace hkxPoser
                 boneMapCollection.SetBoneMap(mesh);
         }
 
-        public void OnUserResized(SwapChain swapChain, ref System.Drawing.Size clientSize)
+        public void OnUserResized(SwapChain swapChain, ref Viewport viewport)
         {
             System.Console.WriteLine("Renderer3d.OnUserResized");
 
@@ -184,7 +184,7 @@ namespace hkxPoser
             Utilities.Dispose(ref renderView);
 
             SwapChainDescription desc = swapChain.Description;
-            swapChain.ResizeBuffers(desc.BufferCount, clientSize.Width, clientSize.Height, desc.ModeDescription.Format, desc.Flags);
+            swapChain.ResizeBuffers(desc.BufferCount, viewport.Width, viewport.Height, desc.ModeDescription.Format, desc.Flags);
 
             using (var resource = Texture2D.FromSwapChain<Texture2D>(swapChain, 0))
             {
@@ -196,8 +196,8 @@ namespace hkxPoser
                 Format = Format.D32_Float_S8X24_UInt,
                 ArraySize = 1,
                 MipLevels = 1,
-                Width = clientSize.Width,
-                Height = clientSize.Height,
+                Width = viewport.Width,
+                Height = viewport.Height,
                 SampleDescription = swapChain.Description.SampleDescription,
                 Usage = ResourceUsage.Default,
                 BindFlags = BindFlags.DepthStencil,
@@ -209,7 +209,7 @@ namespace hkxPoser
             }
 
             // Setup targets and viewport for rendering
-            context.Rasterizer.SetViewport(new Viewport(0, 0, clientSize.Width, clientSize.Height, 0.0f, 1.0f));
+            context.Rasterizer.SetViewport(viewport);
             context.OutputMerger.SetTargets(depthView, renderView);
         }
 

@@ -59,6 +59,9 @@ Run MSBuild
 ## Acknowledgments
 hkxPoser uses Havok(R). (C) Copyright 1999-2008 Havok.com Inc. (and its Licensors). All Rights Reserved. See www.havok.com for details.
 
+- [NifTools Project](http://www.niftools.org/)
+- [SharpDX](http://sharpdx.org/)
+
 ## License
 MIT License
 

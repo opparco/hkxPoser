@@ -14,13 +14,13 @@ Copy diffuse textures (.dds) into data\textures folder. subfolders are not neede
 
 ### Example
 ```
-in data/meshes:
+in data\meshes:
   femalebody_1.nif
   femalefeet_1.nif
   femalehands_1.nif
   femalehead.nif
 
-in data/textures:
+in data\textures:
   femalebody_1.dds
   femalehands_1.dds
   femalehead.dds

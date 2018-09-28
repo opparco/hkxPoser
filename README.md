@@ -1,12 +1,33 @@
 # hkxPoser
-This is a simple editor of animation.hkx. I made it for the purpose of fine adjustment of existing pose.
+This is a simple editor for animation.hkx.
+I made it for the purpose of fine adjustment of existing pose.
 
 ## Prerequisite
 - .NET Framework 4.5.2
 - [hkdump](https://github.com/opparco/hkdump)
 
 ## Usage
-Start hkxPoser.exe.
+1. Prepare nif models.
+
+Copy nif models (.nif) into data\meshes folder.
+Copy diffuse textures (.dds) into data\textures folder. subfolders are not needed.
+
+### Example
+```
+in data/meshes:
+  femalebody_1.nif
+  femalefeet_1.nif
+  femalehands_1.nif
+  femalehead.nif
+
+in data/textures:
+  femalebody_1.dds
+  femalehands_1.dds
+  femalehead.dds
+```
+2. Launch hkxPoser.exe
+
+3. Drop any animation file (.hkx) onto the screen.
 
 Click on a round marker to select a bone.
 The selected bone will turn red.
@@ -39,5 +60,7 @@ Run MSBuild
 hkxPoser uses Havok(R). (C) Copyright 1999-2008 Havok.com Inc. (and its Licensors). All Rights Reserved. See www.havok.com for details.
 
 ## License
-
 MIT License
+
+## Author
+opparco

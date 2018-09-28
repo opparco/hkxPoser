@@ -98,7 +98,7 @@ namespace hkxPoser
 
             string meshes_path = Path.Combine(Application.StartupPath, @"data\meshes");
             string textures_path = Path.Combine(Application.StartupPath, @"data\textures");
-            string shader_path = Path.Combine(Application.StartupPath, @"MiniCube.fx");
+            string shader_path = Path.Combine(Application.StartupPath, @"shader.fx");
 
             foreach (string file in Directory.GetFiles(meshes_path, "*.nif"))
             {

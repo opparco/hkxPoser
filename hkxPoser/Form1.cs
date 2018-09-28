@@ -14,12 +14,12 @@ namespace hkxPoser
     {
         internal Viewer viewer = null;
 
-        public Form1()
+        public Form1(Settings settings)
         {
             InitializeComponent();
 
-            this.ClientSize = new Size(640, 640);
-            viewer = new Viewer();
+            this.ClientSize = settings.ClientSize;
+            viewer = new Viewer(settings);
             viewer.LoadAnimationEvent += delegate(object sender, EventArgs args)
             {
                 trackBar1.Maximum = viewer.GetNumFrames()-1;

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Settings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <ClientSize>
+    <Width>640</Width>
+    <Height>640</Height>
+  </ClientSize>
+  <ScreenColor>
+    <R>192</R>
+    <G>192</G>
+    <B>192</B>
+    <A>255</A>
+  </ScreenColor>
+</Settings>

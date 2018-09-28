@@ -53,7 +53,6 @@ namespace hkxPoser
             System.Console.WriteLine("Renderer3d.Dispose");
             if (context != null)
             {
-                // device resources
                 DiscardDeviceResources();
 
                 textureCollection?.Dispose();
@@ -67,7 +66,6 @@ namespace hkxPoser
                 foreach (Mesh mesh in nif.meshes)
                     mesh.Dispose();
 
-                // device independent resources
                 context.ClearState();
                 context.Flush();
                 context.Dispose();
@@ -132,7 +130,6 @@ namespace hkxPoser
             cb_mat = new Buffer(device, Utilities.SizeOf<Matrix>() * 40, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<Matrix>());
             cb_shader_flags = new Buffer(device, Utilities.SizeOf<uint>() * 4, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<uint>());
 
-            // Prepare All the stages
             context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 
             context.VertexShader.SetConstantBuffer(0, cb_wvp);
@@ -176,7 +173,6 @@ namespace hkxPoser
 
         public void DiscardDeviceResources()
         {
-            // Dispose all previous allocated resources
             Utilities.Dispose(ref renderView);
             Utilities.Dispose(ref depthView);
         }
@@ -217,11 +213,12 @@ namespace hkxPoser
             context.UpdateSubresource(ref wvp, cb_wvp);
         }
 
+        public Color ScreenColor { get; set; }
+
         public void Render()
         {
-            // Clear views
             context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
-            context.ClearRenderTargetView(renderView, new Color(192, 192, 192, 255));
+            context.ClearRenderTargetView(renderView, ScreenColor);
 
             foreach (NiFile nif in nifs)
             foreach (Mesh mesh in nif.meshes)
@@ -243,17 +240,14 @@ namespace hkxPoser
                     shader_flags[1] = mesh.SLSF2;
                     context.UpdateSubresource<uint>(shader_flags, cb_shader_flags);
 
-                    // Switch buffers
                     context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(submesh.vb_positions, Utilities.SizeOf<Vector3>(), 0));
                     context.InputAssembler.SetVertexBuffers(1, new VertexBufferBinding(submesh.vb_uvs, Utilities.SizeOf<Vector2>(), 0));
                     context.InputAssembler.SetVertexBuffers(2, new VertexBufferBinding(submesh.vb_weights, Utilities.SizeOf<Vector4>(), 0));
                     context.InputAssembler.SetVertexBuffers(3, new VertexBufferBinding(submesh.vb_indices, Utilities.SizeOf<uint>(), 0));
                     context.InputAssembler.SetIndexBuffer(submesh.ib, Format.R16_UInt, 0);
 
-                    //set texture
                     context.PixelShader.SetShaderResource(0, textureCollection.GetTextureViewByPath(mesh.albedoMap_path));
 
-                    // Draw the mesh
                     context.DrawIndexed(submesh.num_triangle_points, 0, 0);
                 }
             }

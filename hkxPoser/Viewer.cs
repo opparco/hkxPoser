@@ -396,10 +396,13 @@ namespace hkxPoser
         public CommandManager command_man { get; }
         BoneCommand bone_command = null;
 
-        public Viewer()
+        public Viewer(Settings settings)
         {
             renderer3d = new Renderer3d();
+            renderer3d.ScreenColor = settings.ScreenColor;
+
             renderer2d = new Renderer2d();
+
             command_man = new CommandManager();
         }
 

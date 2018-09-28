@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 using System.Windows.Forms;
 
 namespace hkxPoser
@@ -17,7 +15,10 @@ namespace hkxPoser
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            Form1 form1 = new Form1();
+            Settings settings = Settings.Load(Path.Combine(Application.StartupPath, @"config.xml"));
+            //settings.Dump();
+
+            Form1 form1 = new Form1(settings);
             Form2 form2 = new Form2();
 
             form2.TopLevel = false;

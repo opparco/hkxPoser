@@ -91,6 +91,8 @@ namespace hkxPoser
             return Vector3.TransformCoordinate(v, world_to_screen);
         }
 
+        public Color ScreenColor { get; set; }
+
         public void Render(SwapChain swapChain, ref Viewport viewport, hkaBone selected_bone, string anim_filename)
         {
             Size2 size = new Size2(viewport.Width, viewport.Height);
@@ -98,6 +100,8 @@ namespace hkxPoser
             CreateDeviceResources(swapChain);
 
             renderTarget.BeginDraw();
+
+            renderTarget.Clear(ScreenColor);
 
             DrawCenterAxis();
 

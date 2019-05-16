@@ -96,7 +96,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Renderer2d.cs" />
-    <Compile Include="Renderer3d.cs" />
     <Compile Include="SimpleCamera.cs" />
     <Compile Include="TextureCollection.cs" />
     <Compile Include="TextureLoader.cs" />
@@ -134,9 +133,6 @@
     <Content Include="config.xml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
-    </Content>
-    <Content Include="shader.fx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

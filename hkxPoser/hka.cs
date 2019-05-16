@@ -29,6 +29,13 @@ public class Transform
         this.scale = scale;
     }
 
+    public Transform(Transform t)
+    {
+        this.translation = t.translation;
+        this.rotation = t.rotation;
+        this.scale = t.scale;
+    }
+
     public static Transform operator *(Transform t1, float amount)
     {
         return new Transform(
@@ -91,6 +98,11 @@ public class hkaBone
         this.name = reader.ReadCString();
     }
 
+    public void Write(BinaryWriter writer)
+    {
+        writer.WriteCString(this.name);
+    }
+
     internal Transform GetWorldCoordinate()
     {
         Transform t = new Transform();
@@ -129,7 +141,7 @@ public class hkaSkeleton
         {
             string head = reader.ReadHeaderString();
             uint version = reader.ReadUInt32();
-            // should be 0x01000200
+            // should be 0x03000200
             int nskeletons = reader.ReadInt32();
             // should be 1 or 2
             Read(reader);
@@ -227,6 +239,71 @@ public class hkaSkeleton
             this.floatSlots[i] = reader.ReadCString();
         }
     }
+
+    /// save skeleton.bin
+    public void Save(string filename)
+    {
+        using (Stream stream = File.Create(filename))
+            Save(stream);
+    }
+
+    public void Save(Stream stream)
+    {
+        using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
+        {
+            string head = "hkdump File Format, Version 3.0.2.0";
+            uint version = 0x03000200;
+            int nskeletons = 1;
+            int nanimations = 0;
+
+            writer.WriteHeaderString(head);
+            writer.Write(version);
+            writer.Write(nskeletons);
+
+            Write(writer);
+
+            writer.Write(nanimations);
+        }
+    }
+
+    public void Write(BinaryWriter writer)
+    {
+        /// A user name to aid in identifying the skeleton
+        writer.WriteCString(this.name);
+
+        /// Parent relationship
+        {
+            int nparentIndices = this.parentIndices.Length;
+            writer.Write((int)nparentIndices);
+            for (int i = 0; i < nparentIndices; i++)
+            {
+                writer.Write(this.parentIndices[i]);
+            }
+        }
+        /// Bones for this skeleton
+        {
+            int nbones = this.bones.Length;
+            writer.Write((int)nbones);
+            for (int i = 0; i < nbones; i++)
+            {
+                this.bones[i].Write(writer);
+            }
+        }
+        /// The reference pose for the bones of this skeleton. This pose is stored in local space.
+        {
+            int nreferencePose = this.referencePose.Length;
+            writer.Write((int)nreferencePose);
+            for (int i = 0; i < nreferencePose; i++)
+            {
+                this.referencePose[i].Write(writer);
+            }
+        }
+        /// The reference values for the float slots of this skeleton. This pose is stored in local space.
+        writer.Write((int)0);
+        /// Floating point track slots. Often used for auxiliary float data or morph target parameters etc.
+        /// This defines the target when binding animations to a particular rig.
+        writer.Write((int)0);
+    }
 }
 
 public class hkaPose
@@ -288,6 +365,58 @@ public class Annotation
     }
 }
 
+public class hkaDefaultMotion
+{
+    public Vector4 up;
+    public Vector4 forward;
+    public float duration;
+    public Vector4[] referenceFrameSamples;
+
+    public void Read(BinaryReader reader)
+    {
+        int frameType = reader.ReadInt32();
+        //Console.WriteLine("frameType: {0} ", frameType);
+        switch (frameType)
+        {
+        case 1:
+            {
+                reader.ReadVector4(out this.up);
+                reader.ReadVector4(out this.forward);
+
+                this.duration = reader.ReadSingle();
+
+                int numReferenceFrameSamples = reader.ReadInt32();
+                //Console.WriteLine("numReferenceFrameSamples: {0} ", numReferenceFrameSamples);
+                this.referenceFrameSamples = new Vector4[numReferenceFrameSamples];
+                for (int i = 0; i < numReferenceFrameSamples; i++)
+                {
+                    reader.ReadVector4(out this.referenceFrameSamples[i]);
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    public void Write(BinaryWriter writer)
+    {
+        writer.Write((int)1); // frameType
+
+        writer.Write(ref this.up);
+        writer.Write(ref this.forward);
+
+        writer.Write(this.duration);
+
+        int numReferenceFrameSamples = this.referenceFrameSamples.Length;
+        writer.Write(numReferenceFrameSamples);
+        for (int i = 0; i < numReferenceFrameSamples; i++)
+        {
+            writer.Write(ref this.referenceFrameSamples[i]);
+        }
+    }
+}
+
 public class hkaAnimation
 {
     public int numOriginalFrames;
@@ -295,9 +424,11 @@ public class hkaAnimation
 
     public hkaPose[] pose;
     public Annotation[] annotations;
+    public hkaDefaultMotion defaultMotion;
 
     public int numTransforms { get { return pose[0].transforms.Length; } }
     public int numFloats { get { return pose[0].floats.Length; } }
+    public bool hasExtractedMotion { get { return defaultMotion != null; } }
 
     /// load anim.bin
     public bool Load(string filename)
@@ -313,7 +444,7 @@ public class hkaAnimation
             string head = reader.ReadHeaderString();
             //TODO: throw exception
             uint version = reader.ReadUInt32();
-            if (version != 0x01000200)
+            if (version != 0x03000200)
             {
 		Console.WriteLine("Error: version mismatch! Abort.");
                 return false;
@@ -358,13 +489,30 @@ public class hkaAnimation
         /// The annotation tracks associated with this skeletal animation.
 
         int numAnnotationTracks = reader.ReadInt32();
-        int numAnnotations = reader.ReadInt32();
-
-        this.annotations = new Annotation[numAnnotations];
-        for (int i = 0; i < numAnnotations; i++)
+        //Console.WriteLine("numAnnotationTracks: {0} ", numAnnotationTracks);
         {
-            this.annotations[i] = new Annotation();
-            this.annotations[i].Read(reader);
+            int numAnnotations = reader.ReadInt32();
+            //Console.WriteLine("numAnnotations: {0} ", numAnnotations);
+
+            this.annotations = new Annotation[numAnnotations];
+            for (int i = 0; i < numAnnotations; i++)
+            {
+                this.annotations[i] = new Annotation();
+                this.annotations[i].Read(reader);
+            }
+        }
+        for (int x = 1; x < numAnnotationTracks; x++)
+        {
+            int numAnnotations = reader.ReadInt32();
+            //Console.WriteLine("numAnnotations: {0} ", numAnnotations);
+        }
+
+        byte hasExtractedMotion = reader.ReadByte();
+        //Console.WriteLine("hasExtractedMotion: {0} ", hasExtractedMotion);
+        if (hasExtractedMotion != (byte)0)
+        {
+            this.defaultMotion = new hkaDefaultMotion();
+            this.defaultMotion.Read(reader);
         }
     }
 
@@ -379,8 +527,8 @@ public class hkaAnimation
     {
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
         {
-            string head = "hkdump File Format, Version 1.0.2.0";
-            uint version = 0x01000200;
+            string head = "hkdump File Format, Version 3.0.2.0";
+            uint version = 0x03000200;
             int nskeletons = 0;
             int nanimations = 1;
 
@@ -408,12 +556,27 @@ public class hkaAnimation
 
         int numAnnotationTracks = this.numTransforms; // why
         writer.Write(numAnnotationTracks);
-        int numAnnotations = this.annotations.Length;
-        writer.Write(numAnnotations);
-
-        for (int i = 0; i < numAnnotations; i++)
         {
-            this.annotations[i].Write(writer);
+            int numAnnotations = this.annotations.Length;
+            writer.Write(numAnnotations);
+
+            for (int i = 0; i < numAnnotations; i++)
+            {
+                this.annotations[i].Write(writer);
+            }
+        }
+        for (int i = 1; i < numAnnotationTracks; i++)
+        {
+            writer.Write((int)0); // numAnnotations
+        }
+        if (this.hasExtractedMotion)
+        {
+            writer.Write((byte)1); // hasExtractedMotion
+            this.defaultMotion.Write(writer);
+        }
+        else
+        {
+            writer.Write((byte)0); // hasExtractedMotion
         }
     }
 }

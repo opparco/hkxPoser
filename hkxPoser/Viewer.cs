@@ -225,30 +225,57 @@ namespace hkxPoser
             return '"' + file + '"';
         }
 
-        public static string CreateTempFileName(string file)
+        public static string CreateRawFileName(string file)
         {
             string basename = Path.GetFileNameWithoutExtension(file);
             return Path.Combine(Application.StartupPath, @"tmp\" + basename + ".bin");
         }
 
+        public void LoadAnimation_1(string source_file, string hctout_file)
+        {
+            string raw_file = CreateRawFileName(source_file);
+            {
+                ProcessStartInfo info = new ProcessStartInfo(
+                        Path.Combine(Application.StartupPath, @"bin\hkdump-bin.exe"),
+                        EscapeFileName(hctout_file) + " -o " + EscapeFileName(raw_file));
+                info.UseShellExecute = false;
+                info.RedirectStandardOutput = true;
+
+                Process process = Process.Start(info);
+                Console.WriteLine(process.StandardOutput.ReadToEnd());
+                process.WaitForExit();
+                if (process.ExitCode == 0) // successful
+                {
+                    if (anim.Load(raw_file))
+                    {
+                        LoadAnimationSuccessful(source_file);
+                    }
+                }
+            }
+        }
+
+        public static string CreateHctOutputFileName(string file)
+        {
+            string basename = Path.GetFileNameWithoutExtension(file);
+            return Path.Combine(Application.StartupPath, @"win32\" + basename + ".hkx");
+        }
+
         public void LoadAnimation(string source_file)
         {
-            string file = CreateTempFileName(source_file);
-
-            ProcessStartInfo info = new ProcessStartInfo(
-                    Path.Combine(Application.StartupPath, @"bin\hkdump-bin.exe"),
-                    EscapeFileName(source_file) + " -o " + EscapeFileName(file));
-            info.UseShellExecute = false;
-            info.RedirectStandardOutput = true;
-
-            Process process = Process.Start(info);
-            Console.WriteLine(process.StandardOutput.ReadToEnd());
-            process.WaitForExit();
-            if (process.ExitCode == 0) // successful
+            string hctout_file = CreateHctOutputFileName(source_file);
             {
-                if (anim.Load(file))
+                ProcessStartInfo info = new ProcessStartInfo(
+                        Path.Combine(Application.StartupPath, @"bin\hct.exe"),
+                        EscapeFileName(source_file) + " -o " + EscapeFileName(hctout_file));
+                info.UseShellExecute = false;
+                info.RedirectStandardOutput = true;
+
+                Process process = Process.Start(info);
+                Console.WriteLine(process.StandardOutput.ReadToEnd());
+                process.WaitForExit();
+                if (process.ExitCode == 0) // successful
                 {
-                    LoadAnimationSuccessful(source_file);
+                    LoadAnimation_1(source_file, hctout_file);
                 }
             }
         }
@@ -267,17 +294,17 @@ namespace hkxPoser
 
         public void SaveAnimation(string dest_file)
         {
-            string file = CreateTempFileName(dest_file);
+            string raw_file = CreateRawFileName(dest_file);
 
             ApplyPatchToAnimation();
 
             //anim.numOriginalFrames = 1;
             //anim.duration = 1.0f/30.0f;
-            anim.Save(file);
+            anim.Save(raw_file);
 
             ProcessStartInfo info = new ProcessStartInfo(
                     Path.Combine(Application.StartupPath, @"bin\hkconv.exe"),
-                    EscapeFileName(file) + " -o " + EscapeFileName(dest_file));
+                    EscapeFileName(raw_file) + " -o " + EscapeFileName(dest_file));
             info.UseShellExecute = false;
             info.RedirectStandardOutput = true;
 

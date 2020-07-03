@@ -23,7 +23,7 @@ cbuffer cb_camera : register(b0)
 // for VS
 cbuffer cb_submesh : register(b1)
 {
-	float4x4 palette[40];
+	float4x4 palette[80];
 }
 
 // update by mesh

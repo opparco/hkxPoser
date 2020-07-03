@@ -14,13 +14,15 @@ namespace MiniCube
         {
             Console.WriteLine("NiFile.ctor path:{0}", path);
             this.header = NiHeader.Load(path);
+            NiObject.user_version = header.user_version;
+            NiObject.user_version_2 = header.user_version_2;
 
-            int bt_NiTriShape = header.GetBlockTypeIdxByName("NiTriShape");
+            int bt_BSSubIndexTriShape = header.GetBlockTypeIdxByName("BSSubIndexTriShape");
             int num_blocks = header.blocks.Length;
             List<Mesh> mesh_collection = new List<Mesh>();
             for (int i = 0; i < header.blocks.Length; i++)
             {
-                if (header.blocks[i].type == bt_NiTriShape)
+                if (header.blocks[i].type == bt_BSSubIndexTriShape)
                 {
                     Mesh mesh = new Mesh(device, header, i);
                     mesh_collection.Add(mesh);

@@ -8,40 +8,12 @@ namespace MiniCube
     using ObjectRef = System.Int32;
     using StringRef = System.Int32;
 
-    public class SubMesh
-    {
-        public Buffer vb_positions, vb_uvs, vb_weights, vb_indices, ib;
-        public int num_triangle_points;
-        public ushort[] bones;
-
-        public void Dispose()
-        {
-            ib.Dispose();
-            vb_indices.Dispose();
-            vb_weights.Dispose();
-            vb_uvs.Dispose();
-            vb_positions.Dispose();
-        }
-
-        public SubMesh(Device device, Vector3[] positions, Vector2[] uvs, Vector4[] weights, uint[] indices, Triangle[] triangles, ushort[] bones)
-        {
-            this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, positions);
-            this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
-            this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, weights);
-            this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, indices);
-            this.ib = Buffer.Create(device, BindFlags.IndexBuffer, triangles);
-
-            this.num_triangle_points = triangles.Length * 3;
-            this.bones = bones;
-        }
-    }
-
     public class Mesh
     {
         NiHeader header;
         ObjectRef triShape_ref;
         BSLightingShaderProperty shader_property = null;
-        NiSkinData skin_data;
+        BSSkinBoneData bone_data;
         public string albedoMap_path;
         //public string normalMap_path;
         public uint SLSF1
@@ -54,12 +26,17 @@ namespace MiniCube
         }
         public uint num_bones;
         public int[] bones;
-        public SubMesh[] submeshes;
+
+        public Buffer vb_positions, vb_uvs, vb_weights, vb_indices, ib;
+        public int num_triangle_points;
 
         public void Dispose()
         {
-            foreach (SubMesh submesh in this.submeshes)
-                submesh.Dispose();
+            ib.Dispose();
+            vb_indices.Dispose();
+            vb_weights.Dispose();
+            vb_uvs.Dispose();
+            vb_positions.Dispose();
         }
 
         static void ToMatrix(NiDump.Transform t, out Matrix m)
@@ -76,41 +53,48 @@ namespace MiniCube
             this.header = header;
             this.triShape_ref = triShape_ref;
 
-            NiTriShape triShape = header.GetObject<NiTriShape>(triShape_ref);
+            BSTriShape triShape = header.GetObject<BSTriShape>(triShape_ref);
 
             Matrix triShape_local_m;
             ToMatrix(triShape.local, out triShape_local_m);
 
-            var triShape_data = header.GetObject<NiTriShapeData>(triShape.data);
+            //var triShape_data = header.GetObject<NiTriShapeData>(triShape.data);
             shader_property = header.GetObject<BSLightingShaderProperty>(triShape.shader_property);
             var shader_texture_set = header.GetObject<BSShaderTextureSet>(shader_property.texture_set);
-            var skin_instance = header.GetObject<NiSkinInstance>(triShape.skin_instance);
-            skin_data = header.GetObject<NiSkinData>(skin_instance.data);
-            var skin_partition = header.GetObject<NiSkinPartition>(skin_instance.skin_partition);
+            var skin_instance = header.GetObject<BSSkinInstance>(triShape.skin);
+            bone_data = header.GetObject<BSSkinBoneData>(skin_instance.data);
 
             albedoMap_path = Path.GetFileName(shader_texture_set.textures[0]);
 
             num_bones = skin_instance.num_bones;
             bones = skin_instance.bones;
 
-            submeshes = new SubMesh[skin_partition.num_skin_partitions];
-            for (int part_i = 0; part_i < skin_partition.num_skin_partitions; part_i++)
             {
-                ref SkinPartition part = ref skin_partition.skin_partitions[part_i];
+                Vector3[] positions = new Vector3[triShape.num_vertices];
+                Vector2[] uvs = new Vector2[triShape.num_vertices];
+                Vector4[] bone_weights = new Vector4[triShape.num_vertices];
+                uint[] bone_indices = new uint[triShape.num_vertices];
 
-                // create submesh vertices/uvs from part.vertex_map
-
-                Vector3[] positions = new Vector3[part.num_vertices];
-                Vector2[] uvs = new Vector2[part.num_vertices];
-
-                for (int i = 0; i < part.num_vertices; i++)
+                for (int i = 0; i < triShape.num_vertices; i++)
                 {
-                    ushort x = part.vertex_map[i];
-                    Vector3.TransformCoordinate(ref triShape_data.vertices[x], ref triShape_local_m, out positions[i]);
-                    uvs[i] = triShape_data.uvs[x];
+                    positions[i] = triShape.vertex_data[i].vertex;
+                    //Vector3.TransformCoordinate(ref positions[i], ref triShape_local_m, out positions[i]);
+                    uvs[i] = triShape.vertex_data[i].uv;
+                    bone_weights[i] = new Vector4(
+                        triShape.vertex_data[i].bone_weights[0],
+                        triShape.vertex_data[i].bone_weights[1],
+                        triShape.vertex_data[i].bone_weights[2],
+                        triShape.vertex_data[i].bone_weights[3]);
+                    bone_indices[i] = System.BitConverter.ToUInt32(triShape.vertex_data[i].bone_indices, 0);
                 }
 
-                submeshes[part_i] = new SubMesh(device, positions, uvs, part.vertex_weights, part.bone_indices, part.triangles, part.bones);
+                this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, positions);
+                this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
+                this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, bone_weights);
+                this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, bone_indices);
+                this.ib = Buffer.Create(device, BindFlags.IndexBuffer, triShape.triangles);
+
+                this.num_triangle_points = triShape.triangles.Length * 3;
             }
         }
 

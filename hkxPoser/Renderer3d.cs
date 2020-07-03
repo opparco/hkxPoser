@@ -39,8 +39,8 @@ namespace hkxPoser
 
         public Renderer3d()
         {
-            bone_matrices = new Matrix[40];
-            for (int i = 0; i < 40; i++)
+            bone_matrices = new Matrix[80];
+            for (int i = 0; i < 80; i++)
                 bone_matrices[i] = Matrix.Identity;
 
             shader_flags = new uint[4];
@@ -225,13 +225,12 @@ namespace hkxPoser
             {
                 int[] boneMap = boneMapCollection.GetBoneMap(mesh);
 
-                foreach (SubMesh submesh in mesh.submeshes)
                 {
-                    for (int i = 0; i < submesh.bones.Length; i++)
+                    for (int i = 0; i < mesh.bones.Length; i++)
                     {
-                        int hkabone_idx = boneMap[submesh.bones[i]];
+                        int hkabone_idx = boneMap[i];
                         if (hkabone_idx != -1)
-                            UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(submesh.bones[i]), out bone_matrices[i]);
+                            UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(i), out bone_matrices[i]);
                         else
                             bone_matrices[i] = Matrix.Zero;
                     }
@@ -240,15 +239,15 @@ namespace hkxPoser
                     shader_flags[1] = mesh.SLSF2;
                     context.UpdateSubresource<uint>(shader_flags, cb_shader_flags);
 
-                    context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(submesh.vb_positions, Utilities.SizeOf<Vector3>(), 0));
-                    context.InputAssembler.SetVertexBuffers(1, new VertexBufferBinding(submesh.vb_uvs, Utilities.SizeOf<Vector2>(), 0));
-                    context.InputAssembler.SetVertexBuffers(2, new VertexBufferBinding(submesh.vb_weights, Utilities.SizeOf<Vector4>(), 0));
-                    context.InputAssembler.SetVertexBuffers(3, new VertexBufferBinding(submesh.vb_indices, Utilities.SizeOf<uint>(), 0));
-                    context.InputAssembler.SetIndexBuffer(submesh.ib, Format.R16_UInt, 0);
+                    context.InputAssembler.SetVertexBuffers(0, new VertexBufferBinding(mesh.vb_positions, Utilities.SizeOf<Vector3>(), 0));
+                    context.InputAssembler.SetVertexBuffers(1, new VertexBufferBinding(mesh.vb_uvs, Utilities.SizeOf<Vector2>(), 0));
+                    context.InputAssembler.SetVertexBuffers(2, new VertexBufferBinding(mesh.vb_weights, Utilities.SizeOf<Vector4>(), 0));
+                    context.InputAssembler.SetVertexBuffers(3, new VertexBufferBinding(mesh.vb_indices, Utilities.SizeOf<uint>(), 0));
+                    context.InputAssembler.SetIndexBuffer(mesh.ib, Format.R16_UInt, 0);
 
                     context.PixelShader.SetShaderResource(0, textureCollection.GetTextureViewByPath(mesh.albedoMap_path));
 
-                    context.DrawIndexed(submesh.num_triangle_points, 0, 0);
+                    context.DrawIndexed(mesh.num_triangle_points, 0, 0);
                 }
             }
 

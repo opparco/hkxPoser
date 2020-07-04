@@ -221,19 +221,11 @@ namespace hkxPoser
             context.ClearRenderTargetView(renderView, ScreenColor);
 
             foreach (NiFile nif in nifs)
-            foreach (Mesh mesh in nif.meshes)
-            {
-                int[] boneMap = boneMapCollection.GetBoneMap(mesh);
-
+                foreach (Mesh mesh in nif.meshes)
                 {
-                    for (int i = 0; i < mesh.bones.Length; i++)
-                    {
-                        int hkabone_idx = boneMap[i];
-                        if (hkabone_idx != -1)
-                            UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(i), out bone_matrices[i]);
-                        else
-                            bone_matrices[i] = Matrix.Zero;
-                    }
+                    int[] boneMap = boneMapCollection.GetBoneMap(mesh);
+
+                    UpdateBoneMatrices(mesh, boneMap);
                     context.UpdateSubresource<Matrix>(bone_matrices, cb_mat);
                     shader_flags[0] = mesh.SLSF1;
                     shader_flags[1] = mesh.SLSF2;
@@ -249,9 +241,20 @@ namespace hkxPoser
 
                     context.DrawIndexed(mesh.num_triangle_points, 0, 0);
                 }
-            }
 
             //swapChain.Present(1, PresentFlags.None);
+        }
+
+        private void UpdateBoneMatrices(Mesh mesh, int[] boneMap)
+        {
+            for (int i = 0; i < mesh.bones.Length; i++)
+            {
+                int hkabone_idx = boneMap[i];
+                if (hkabone_idx != -1)
+                    UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(i), out bone_matrices[i]);
+                else
+                    bone_matrices[i] = Matrix.Zero;
+            }
         }
 
         void UpdateBoneMatrix(int hkabone_idx, Transform t, out Matrix m)

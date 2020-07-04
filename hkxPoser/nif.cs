@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using SharpDX.Direct3D11;
 using NiDump;
+using SharpDX;
+using SharpDX.Direct3D11;
 
 namespace MiniCube
 {
@@ -17,6 +18,7 @@ namespace MiniCube
             NiObject.user_version = header.user_version;
             NiObject.user_version_2 = header.user_version_2;
 
+            int bt_BSTriShape = header.GetBlockTypeIdxByName("BSTriShape");
             int bt_BSSubIndexTriShape = header.GetBlockTypeIdxByName("BSSubIndexTriShape");
             int num_blocks = header.blocks.Length;
             List<Mesh> mesh_collection = new List<Mesh>();

@@ -127,7 +127,7 @@ namespace hkxPoser
             }
 
             cb_wvp = new Buffer(device, Utilities.SizeOf<Matrix>(), ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, 0);
-            cb_mat = new Buffer(device, Utilities.SizeOf<Matrix>() * 40, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<Matrix>());
+            cb_mat = new Buffer(device, Utilities.SizeOf<Matrix>() * 80, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<Matrix>());
             cb_shader_flags = new Buffer(device, Utilities.SizeOf<uint>() * 4, ResourceUsage.Default, BindFlags.ConstantBuffer, CpuAccessFlags.None, ResourceOptionFlags.None, Utilities.SizeOf<uint>());
 
             context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
@@ -225,7 +225,7 @@ namespace hkxPoser
                 {
                     int[] boneMap = boneMapCollection.GetBoneMap(mesh);
 
-                    UpdateBoneMatrices(mesh, boneMap);
+                    UpdateBoneMatrices(mesh);
                     context.UpdateSubresource<Matrix>(bone_matrices, cb_mat);
                     shader_flags[0] = mesh.SLSF1;
                     shader_flags[1] = mesh.SLSF2;
@@ -245,42 +245,12 @@ namespace hkxPoser
             //swapChain.Present(1, PresentFlags.None);
         }
 
-        private void UpdateBoneMatrices(Mesh mesh, int[] boneMap)
+        private void UpdateBoneMatrices(Mesh mesh)
         {
             for (int i = 0; i < mesh.bones.Length; i++)
             {
-                int hkabone_idx = boneMap[i];
-                if (hkabone_idx != -1)
-                    UpdateBoneMatrix(hkabone_idx, mesh.GetBoneLocal(i), out bone_matrices[i]);
-                else
-                    bone_matrices[i] = Matrix.Zero;
+                mesh.GetBoneLocal(i, out bone_matrices[i]);
             }
-        }
-
-        void UpdateBoneMatrix(int hkabone_idx, Transform t, out Matrix m)
-        {
-            Transform hkabone_world = skeleton.bones[hkabone_idx].GetWorldCoordinate();
-
-            Matrix hkabone_m;
-            TransformToMatrix(ref hkabone_world, out hkabone_m);
-
-            Transform refpose_world = t;
-
-            Matrix refpose_m;
-            TransformToMatrix(ref refpose_world, out refpose_m);
-
-            refpose_m.Invert();
-
-            m = refpose_m * hkabone_m;
-        }
-
-        void TransformToMatrix(ref Transform t, out Matrix m)
-        {
-            m = Matrix.Scaling(t.scale) * Matrix.RotationQuaternion(t.rotation);
-            m.M41 = t.translation.X;
-            m.M42 = t.translation.Y;
-            m.M43 = t.translation.Z;
-            m.M44 = 1;
         }
     }
 }

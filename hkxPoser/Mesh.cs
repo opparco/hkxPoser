@@ -46,15 +46,6 @@ namespace MiniCube
             vb_positions.Dispose();
         }
 
-        static void ToMatrix(NiDump.Transform t, out Matrix m)
-        {
-            m = Matrix.Scaling(t.scale) * (Matrix)t.rotation;
-            m.M41 = t.translation.X;
-            m.M42 = t.translation.Y;
-            m.M43 = t.translation.Z;
-            m.M44 = 1;
-        }
-
         public Mesh(Device device, NiHeader header, ObjectRef triShape_ref)
         {
             this.header = header;
@@ -72,6 +63,7 @@ namespace MiniCube
             num_bones = skin_instance.num_bones;
             bones = skin_instance.bones;
 
+            // create device resources
             {
                 Vector3[] positions = new Vector3[triShape.num_vertices];
                 Vector2[] uvs = new Vector2[triShape.num_vertices];
@@ -106,13 +98,6 @@ namespace MiniCube
             ObjectRef node_ref = this.bones[i];
             NiNode node = header.GetObject<NiNode>(node_ref);
             return header.strings[node.name];
-        }
-
-        static Transform ToTransform(NiDump.Transform t)
-        {
-            Quaternion rotation;
-            Quaternion.RotationMatrix(ref t.rotation, out rotation);
-            return new Transform(t.translation, rotation, t.scale);
         }
 
         void TransformToMatrix(ref NiDump.Transform t, out Matrix m)

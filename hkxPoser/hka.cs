@@ -107,13 +107,10 @@ public class hkaBone
     {
         Transform t = new Transform();
         hkaBone bone = this;
-        //int i = 0;
         while (bone != null)
         {
-            //Console.WriteLine(" local loop idx {0} Ref {1}", i, node.self_ref);
             t = bone.local * bone.patch * t;
             bone = bone.parent;
-            //i++;
         }
         return t;
     }

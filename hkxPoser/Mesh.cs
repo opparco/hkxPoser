@@ -132,7 +132,7 @@ namespace MiniCube
             NiNode node = header.GetObject<NiNode>(node_ref);
             node.self_ref = node_ref;
 
-            NiDump.Transform node_local = node.local;// GetLocalTransform(0);
+            NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
             NiDump.Transform bone_trans = bone_data.transforms[i].transform;
             NiDump.Transform t = node_local * bone_trans;
             TransformToMatrix(ref t, out m);

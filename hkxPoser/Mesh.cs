@@ -63,6 +63,14 @@ namespace MiniCube
             num_bones = skin_instance.num_bones;
             bones = skin_instance.bones;
 
+            NiDump.Transform[] bone_transforms;
+
+            bone_transforms = new NiDump.Transform[num_bones];
+            for (int i = 0; i < num_bones; i++)
+            {
+                GetBoneLocal(i, out bone_transforms[i]);
+            }
+
             // create device resources
             {
                 Vector3[] positions = new Vector3[triShape.num_vertices];
@@ -70,17 +78,22 @@ namespace MiniCube
                 Vector4[] bone_weights = new Vector4[triShape.num_vertices];
                 uint[] bone_indices = new uint[triShape.num_vertices];
 
-                for (int i = 0; i < triShape.num_vertices; i++)
+                for (int v = 0; v < triShape.num_vertices; v++)
                 {
-                    positions[i] = triShape.vertex_data[i].vertex;
-                    //Vector3.TransformCoordinate(ref positions[i], ref triShape_local_m, out positions[i]);
-                    uvs[i] = triShape.vertex_data[i].uv;
-                    bone_weights[i] = new Vector4(
-                        triShape.vertex_data[i].bone_weights[0],
-                        triShape.vertex_data[i].bone_weights[1],
-                        triShape.vertex_data[i].bone_weights[2],
-                        triShape.vertex_data[i].bone_weights[3]);
-                    bone_indices[i] = System.BitConverter.ToUInt32(triShape.vertex_data[i].bone_indices, 0);
+                    positions[v] = Vector3.Zero;
+                    for (int x = 0; x < 4; x++)
+                    {
+                        int i = triShape.vertex_data[v].bone_indices[x];
+                        float weight = triShape.vertex_data[v].bone_weights[x];
+                        positions[v] += bone_transforms[i] * triShape.vertex_data[v].vertex * weight;
+                    }
+                    uvs[v] = triShape.vertex_data[v].uv;
+                    bone_weights[v] = new Vector4(
+                        triShape.vertex_data[v].bone_weights[0],
+                        triShape.vertex_data[v].bone_weights[1],
+                        triShape.vertex_data[v].bone_weights[2],
+                        triShape.vertex_data[v].bone_weights[3]);
+                    bone_indices[v] = System.BitConverter.ToUInt32(triShape.vertex_data[v].bone_indices, 0);
                 }
 
                 this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, positions);
@@ -126,7 +139,7 @@ namespace MiniCube
             };
         }
 
-        public void GetBoneLocal(int i, out Matrix m)
+        public void GetBoneLocal(int i, out NiDump.Transform t)
         {
             ObjectRef node_ref = this.bones[i];
             NiNode node = header.GetObject<NiNode>(node_ref);
@@ -134,7 +147,13 @@ namespace MiniCube
 
             NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
             NiDump.Transform bone_trans = bone_data.transforms[i].transform;
-            NiDump.Transform t = node_local * bone_trans;
+            t = node_local * bone_trans;
+        }
+
+        public void GetBoneLocal(int i, out Matrix m)
+        {
+            NiDump.Transform t;
+            GetBoneLocal(i, out t);
             TransformToMatrix(ref t, out m);
         }
     }

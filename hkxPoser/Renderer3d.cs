@@ -223,9 +223,9 @@ namespace hkxPoser
             foreach (NiFile nif in nifs)
                 foreach (Mesh mesh in nif.meshes)
                 {
-                    int[] boneMap = boneMapCollection.GetBoneMap(mesh);
+                    //int[] boneMap = boneMapCollection.GetBoneMap(mesh);
+                    //UpdateBoneMatrices(mesh);
 
-                    UpdateBoneMatrices(mesh);
                     context.UpdateSubresource<Matrix>(bone_matrices, cb_mat);
                     shader_flags[0] = mesh.SLSF1;
                     shader_flags[1] = mesh.SLSF2;
@@ -245,7 +245,7 @@ namespace hkxPoser
             //swapChain.Present(1, PresentFlags.None);
         }
 
-        private void UpdateBoneMatrices(Mesh mesh)
+        void UpdateBoneMatrices(Mesh mesh)
         {
             for (int i = 0; i < mesh.bones.Length; i++)
             {

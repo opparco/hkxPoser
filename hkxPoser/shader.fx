@@ -49,13 +49,14 @@ PS_IN VS( VS_IN input )
 	PS_IN output;
 
 	float4 inp = float4(input.position, 1);
-
+	/*
 	float4x4 mat = palette[input.indices.x] * input.weights.x +
 		palette[input.indices.y] * input.weights.y +
 		palette[input.indices.z] * input.weights.z +
 		palette[input.indices.w] * input.weights.w;
 	float4 p = mul(mat, inp);
-	output.position = mul(wvp, p);
+	*/
+	output.position = mul(wvp, inp);
 	output.texcoord = input.texcoord;
 	
 	return output;

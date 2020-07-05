@@ -27,12 +27,16 @@ namespace hkxPoser
         TextureLoader textureLoader;
         TextureCollection textureCollection;
         BoneMapCollection boneMapCollection;
+        NodeMapCollection nodeMapCollection;
 
         DepthStencilView depthView;
         RenderTargetView renderView;
 
-        hkaSkeleton skeleton;
+        hkaSkeleton hkaskeleton;
+        Skeleton nifskeleton;
         List<NiFile> nifs = new List<NiFile>();
+
+        Dictionary<int, int> hkanodeMap;
 
         Matrix[] bone_matrices;
         uint[] shader_flags;
@@ -71,7 +75,7 @@ namespace hkxPoser
                 context.Dispose();
                 context = null;
             }
-            skeleton = null;
+            hkaskeleton = null;
             device = null;
         }
 
@@ -91,10 +95,13 @@ namespace hkxPoser
             }
         }
 
-        public void InitializeGraphics(Device device, hkaSkeleton skeleton)
+        public void InitializeGraphics(Device device, hkaSkeleton hkaskeleton)
         {
             this.device = device;
-            this.skeleton = skeleton;
+            this.hkaskeleton = hkaskeleton;
+
+            string nifskeleton_path = Path.Combine(Application.StartupPath, @"data\skeleton.nif");
+            nifskeleton = new Skeleton(nifskeleton_path);
 
             string meshes_path = Path.Combine(Application.StartupPath, @"data\meshes");
             string textures_path = Path.Combine(Application.StartupPath, @"data\textures");
@@ -156,19 +163,52 @@ namespace hkxPoser
             using (var blendState = new BlendState(device, blendStateDescription))
                 context.OutputMerger.SetBlendState(blendState);
 
-            // from skeleton
-            // name to idx
-            var nameMap = new Dictionary<string, int>();
-
-            for (int i = 0; i < skeleton.bones.Length; i++)
             {
-                nameMap[skeleton.bones[i].name] = i;
-            }
+                // from skeleton.hkx
+                // name to idx
+                var hkanameMap = new Dictionary<string, int>();
 
-            boneMapCollection = new BoneMapCollection(nameMap);
-            foreach (NiFile nif in nifs)
-            foreach (Mesh mesh in nif.meshes)
-                boneMapCollection.SetBoneMap(mesh);
+                for (int i = 0; i < hkaskeleton.bones.Length; i++)
+                {
+                    hkanameMap[hkaskeleton.bones[i].name] = i;
+                }
+
+                boneMapCollection = new BoneMapCollection(hkanameMap);
+                foreach (NiFile nif in nifs)
+                    foreach (Mesh mesh in nif.meshes)
+                        boneMapCollection.SetBoneMap(mesh);
+
+                // from skeleton.nif
+                // name to idx
+                var nifnameMap = new Dictionary<string, int>();
+
+                for (int i = 0; i < nifskeleton.nodes.Length; i++)
+                {
+                    Node node = nifskeleton.nodes[i];
+
+                    if (node == null)
+                        continue;
+
+                    nifnameMap[node.name] = i;
+                }
+
+                nodeMapCollection = new NodeMapCollection(nifnameMap);
+                foreach (NiFile nif in nifs)
+                    foreach (Mesh mesh in nif.meshes)
+                        nodeMapCollection.SetNodeMap(mesh);
+
+                hkanodeMap = new Dictionary<int, int>();
+
+                for (int i = 0; i < hkaskeleton.bones.Length; i++)
+                {
+                    string name = hkaskeleton.bones[i].name;
+                    int node_idx;
+                    if (nifnameMap.TryGetValue(name, out node_idx))
+                    {
+                        hkanodeMap[i] = node_idx;
+                    }
+                }
+            }
         }
 
         public void DiscardDeviceResources()
@@ -223,8 +263,7 @@ namespace hkxPoser
             foreach (NiFile nif in nifs)
                 foreach (Mesh mesh in nif.meshes)
                 {
-                    //int[] boneMap = boneMapCollection.GetBoneMap(mesh);
-                    //UpdateBoneMatrices(mesh);
+                    UpdateBoneMatrices(mesh);
 
                     context.UpdateSubresource<Matrix>(bone_matrices, cb_mat);
                     shader_flags[0] = mesh.SLSF1;
@@ -245,11 +284,47 @@ namespace hkxPoser
             //swapChain.Present(1, PresentFlags.None);
         }
 
+        void TransformToMatrix(ref Transform t, out Matrix m)
+        {
+            ref Quaternion gl_rotation = ref t.rotation;
+            //Quaternion dx_rotation;
+            //Quaternion.Conjugate(ref gl_rotation, out dx_rotation);
+            Matrix.RotationQuaternion(ref gl_rotation, out m);
+            m.M41 = t.translation.X;
+            m.M42 = t.translation.Y;
+            m.M43 = t.translation.Z;
+        }
+
         void UpdateBoneMatrices(Mesh mesh)
         {
+            for (int i = 0; i < hkaskeleton.bones.Length; i++)
+            {
+                int node_idx;
+                if (hkanodeMap.TryGetValue(i, out node_idx))
+                {
+                    nifskeleton.nodes[node_idx].local = hkaskeleton.bones[i].local * hkaskeleton.bones[i].patch;
+                }
+            }
+
+            int[] boneMap = boneMapCollection.GetBoneMap(mesh);
+            int[] nodeMap = nodeMapCollection.GetNodeMap(mesh);
+
             for (int i = 0; i < mesh.bones.Length; i++)
             {
-                mesh.GetBoneLocal(i, out bone_matrices[i]);
+                int node_idx = nodeMap[i];
+
+                Transform node_world = nifskeleton.nodes[node_idx].GetWorldCoordinate();
+                Transform rest_world = nifskeleton.nodes[node_idx].rest_world;
+
+                //Transform t = rest_world.inv * node_world;
+                //TransformToMatrix(ref t, out bone_matrices[i]);
+
+                Matrix node_m;
+                Matrix rest_m;
+                TransformToMatrix(ref node_world, out node_m);
+                TransformToMatrix(ref rest_world, out rest_m);
+                rest_m.Invert();
+                bone_matrices[i] = rest_m * node_m;
             }
         }
     }

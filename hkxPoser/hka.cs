@@ -36,14 +36,6 @@ public class Transform
         this.scale = t.scale;
     }
 
-    public static Transform operator *(Transform t1, float amount)
-    {
-        return new Transform(
-            t1.translation * amount,
-            Quaternion.Slerp(Quaternion.Identity, t1.rotation, amount),
-            (float)Math.Pow(t1.scale, amount));
-    }
-
     public static Transform operator *(Transform t1, Transform t2)
     {
         return new Transform(
@@ -86,12 +78,12 @@ public class Transform
 public class hkaBone
 {
     public string name;
-    internal short idx;
-    internal bool hide = false;
-    internal hkaBone parent = null;
-    internal List<hkaBone> children = new List<hkaBone>();
-    internal Transform local;
-    internal Transform patch;
+    public short idx;
+    public bool hide = false;
+    public hkaBone parent = null;
+    public List<hkaBone> children = new List<hkaBone>();
+    public Transform local;
+    public Transform patch;
 
     public void Read(BinaryReader reader)
     {
@@ -103,7 +95,7 @@ public class hkaBone
         writer.WriteCString(this.name);
     }
 
-    internal Transform GetWorldCoordinate()
+    public Transform GetWorldCoordinate()
     {
         Transform t = new Transform();
         hkaBone bone = this;

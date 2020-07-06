@@ -312,6 +312,11 @@ namespace hkxPoser
             for (int i = 0; i < mesh.bones.Length; i++)
             {
                 int node_idx = nodeMap[i];
+                if (node_idx == -1)
+                {
+                    bone_matrices[i] = Matrix.Identity;
+                    continue;
+                }
 
                 Transform node_world = nifskeleton.nodes[node_idx].GetWorldCoordinate();
                 Transform rest_world = nifskeleton.nodes[node_idx].rest_world;

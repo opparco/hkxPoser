@@ -26,8 +26,8 @@ namespace hkxPoser
 
         TextureLoader textureLoader;
         TextureCollection textureCollection;
-        BoneMapCollection boneMapCollection;
-        NodeMapCollection nodeMapCollection;
+        BoneMapCollection hkabonemapCollection;
+        BoneMapCollection nifbonemapCollection;
 
         DepthStencilView depthView;
         RenderTargetView renderView;
@@ -116,8 +116,8 @@ namespace hkxPoser
             textureLoader = new TextureLoader(textures_path);
             textureCollection = new TextureCollection(device, textureLoader);
             foreach (NiFile nif in nifs)
-            foreach (Mesh mesh in nif.meshes)
-                textureCollection.LoadTexture(mesh.albedoMap_path);
+                foreach (Mesh mesh in nif.meshes)
+                    textureCollection.LoadTexture(mesh.albedoMap_path);
 
             context = device.ImmediateContext;
 
@@ -163,50 +163,49 @@ namespace hkxPoser
             using (var blendState = new BlendState(device, blendStateDescription))
                 context.OutputMerger.SetBlendState(blendState);
 
+            // from skeleton.hkx
+            // name to idx
+            var hkanameMap = new Dictionary<string, int>();
+
+            for (int i = 0; i < hkaskeleton.bones.Length; i++)
             {
-                // from skeleton.hkx
-                // name to idx
-                var hkanameMap = new Dictionary<string, int>();
+                hkaBone bone = hkaskeleton.bones[i];
+                hkanameMap[bone.name] = i;
+            }
 
-                for (int i = 0; i < hkaskeleton.bones.Length; i++)
+            // from skeleton.nif
+            // name to idx
+            var nifnameMap = new Dictionary<string, int>();
+
+            for (int i = 0; i < nifskeleton.nodes.Length; i++)
+            {
+                Node node = nifskeleton.nodes[i];
+
+                if (node == null)
+                    continue;
+
+                nifnameMap[node.name] = i;
+            }
+
+            hkabonemapCollection = new BoneMapCollection(hkanameMap);
+            nifbonemapCollection = new BoneMapCollection(nifnameMap);
+
+            foreach (NiFile nif in nifs)
+                foreach (Mesh mesh in nif.meshes)
                 {
-                    hkanameMap[hkaskeleton.bones[i].name] = i;
+                    hkabonemapCollection.SetBoneMap(mesh);
+                    nifbonemapCollection.SetBoneMap(mesh);
                 }
 
-                boneMapCollection = new BoneMapCollection(hkanameMap);
-                foreach (NiFile nif in nifs)
-                    foreach (Mesh mesh in nif.meshes)
-                        boneMapCollection.SetBoneMap(mesh);
+            hkanodeMap = new Dictionary<int, int>();
 
-                // from skeleton.nif
-                // name to idx
-                var nifnameMap = new Dictionary<string, int>();
-
-                for (int i = 0; i < nifskeleton.nodes.Length; i++)
+            for (int i = 0; i < hkaskeleton.bones.Length; i++)
+            {
+                string name = hkaskeleton.bones[i].name;
+                int node_idx;
+                if (nifnameMap.TryGetValue(name, out node_idx))
                 {
-                    Node node = nifskeleton.nodes[i];
-
-                    if (node == null)
-                        continue;
-
-                    nifnameMap[node.name] = i;
-                }
-
-                nodeMapCollection = new NodeMapCollection(nifnameMap);
-                foreach (NiFile nif in nifs)
-                    foreach (Mesh mesh in nif.meshes)
-                        nodeMapCollection.SetNodeMap(mesh);
-
-                hkanodeMap = new Dictionary<int, int>();
-
-                for (int i = 0; i < hkaskeleton.bones.Length; i++)
-                {
-                    string name = hkaskeleton.bones[i].name;
-                    int node_idx;
-                    if (nifnameMap.TryGetValue(name, out node_idx))
-                    {
-                        hkanodeMap[i] = node_idx;
-                    }
+                    hkanodeMap[i] = node_idx;
                 }
             }
         }
@@ -306,8 +305,8 @@ namespace hkxPoser
                 }
             }
 
-            int[] boneMap = boneMapCollection.GetBoneMap(mesh);
-            int[] nodeMap = nodeMapCollection.GetNodeMap(mesh);
+            int[] boneMap = hkabonemapCollection.GetBoneMap(mesh);
+            int[] nodeMap = nifbonemapCollection.GetBoneMap(mesh);
 
             for (int i = 0; i < mesh.bones.Length; i++)
             {

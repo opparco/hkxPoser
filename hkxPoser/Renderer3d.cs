@@ -100,7 +100,7 @@ namespace hkxPoser
             this.device = device;
             this.hkaskeleton = hkaskeleton;
 
-            string nifskeleton_path = Path.Combine(Application.StartupPath, @"data\skeleton.nif");
+            string nifskeleton_path = Path.Combine(Application.StartupPath, @"data\skeleton_female.nif");
             nifskeleton = new Skeleton(nifskeleton_path);
 
             string meshes_path = Path.Combine(Application.StartupPath, @"data\meshes");

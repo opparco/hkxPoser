@@ -20,7 +20,7 @@ namespace MiniCube
             NiObject.user_version_2 = header.user_version_2;
 
             int bt_NiNode = header.GetBlockTypeIdxByName("NiNode");
-            StringRef root_name_ref = header.GetStringRefByName("Root");
+            StringRef root_name_ref = header.GetStringRefByName("NPC");
 
             nodes = new Node[header.blocks.Length];
             for (int i = 0; i < header.blocks.Length; i++)

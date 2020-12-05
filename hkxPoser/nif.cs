@@ -27,7 +27,7 @@ namespace MiniCube
             List<Mesh> mesh_collection = new List<Mesh>();
             for (int i = 0; i < header.blocks.Length; i++)
             {
-                if (header.blocks[i].type == bt_BSSubIndexTriShape)
+                if (header.blocks[i].type == bt_BSTriShape)
                 {
                     Mesh mesh = new Mesh(device, header, i);
                     mesh_collection.Add(mesh);

@@ -23,7 +23,7 @@ namespace hkxPoser
         SharpDX.DXGI.Factory1 factory1;
         SwapChain swapChain;
 
-        //Renderer3d renderer3d;
+        Renderer3d renderer3d;
         Renderer2d renderer2d;
 
         /// <summary>
@@ -109,7 +109,7 @@ namespace hkxPoser
             System.Console.WriteLine("Viewer.form_Resize");
 
             renderer2d.DiscardDeviceResources();
-            //renderer3d.DiscardDeviceResources();
+            renderer3d.DiscardDeviceResources();
 
             System.Drawing.Size clientSize = control.ClientSize;
             CreateViewportAndProjection(ref clientSize);
@@ -117,7 +117,7 @@ namespace hkxPoser
             SwapChainDescription desc = swapChain.Description;
             swapChain.ResizeBuffers(desc.BufferCount, viewport.Width, viewport.Height, desc.ModeDescription.Format, desc.Flags);
 
-            //renderer3d.CreateDeviceResources(swapChain, ref viewport);
+            renderer3d.CreateDeviceResources(swapChain, ref viewport);
         }
 
         static SampleDescription DetectSampleDescription(SharpDX.Direct3D11.Device device, Format format)
@@ -177,8 +177,8 @@ namespace hkxPoser
                 LoadAnimationSuccessful(source_file);
             }
 
-            //renderer3d.InitializeGraphics(device, skeleton);
-            //renderer3d.CreateDeviceResources(swapChain, ref viewport);
+            renderer3d.InitializeGraphics(device, skeleton);
+            renderer3d.CreateDeviceResources(swapChain, ref viewport);
 
             renderer2d.CreateDeviceIndependentResources(skeleton);
 
@@ -331,14 +331,14 @@ namespace hkxPoser
             view = camera.ViewMatrix;
             wvp = view * proj;
             world_to_screen = view * proj * CreateViewportMatrix(viewport);
-            //renderer3d.Update(ref wvp);
+            renderer3d.Update(ref wvp);
             renderer2d.Update(ref world_to_screen);
         }
 
         public void Render()
         {
             //TODO: create resources if discarded
-            //renderer3d.Render();
+            renderer3d.Render();
             renderer2d.Render(swapChain, ref viewport, selected_bone, anim_filename);
 
             swapChain.Present(0, PresentFlags.None);
@@ -425,8 +425,8 @@ namespace hkxPoser
 
         public Viewer(Settings settings)
         {
-            //renderer3d = new Renderer3d();
-            //renderer3d.ScreenColor = settings.ScreenColor;
+            renderer3d = new Renderer3d();
+            renderer3d.ScreenColor = settings.ScreenColor;
 
             renderer2d = new Renderer2d();
             renderer2d.ScreenColor = settings.ScreenColor;
@@ -489,7 +489,7 @@ namespace hkxPoser
             System.Console.WriteLine("Viewer.Dispose");
 
             renderer2d.DiscardDeviceResources();
-            //renderer3d.Dispose();
+            renderer3d.Dispose();
 
             Utilities.Dispose(ref swapChain);
             Utilities.Dispose(ref factory1);

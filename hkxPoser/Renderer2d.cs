@@ -101,7 +101,7 @@ namespace hkxPoser
 
             renderTarget.BeginDraw();
 
-            renderTarget.Clear(ScreenColor);
+            //renderTarget.Clear(ScreenColor);
 
             DrawCenterAxis();
 

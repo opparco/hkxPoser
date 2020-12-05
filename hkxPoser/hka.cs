@@ -130,7 +130,7 @@ public class hkaSkeleton
         {
             string head = reader.ReadHeaderString();
             uint version = reader.ReadUInt32();
-            // should be 0x03000200
+            // should be 0x01000200
             int nskeletons = reader.ReadInt32();
             // should be 1 or 2
             Read(reader);
@@ -240,8 +240,8 @@ public class hkaSkeleton
     {
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
         {
-            string head = "hkdump File Format, Version 3.0.2.0";
-            uint version = 0x03000200;
+            string head = "hkdump File Format, Version 1.0.2.0";
+            uint version = 0x01000200;
             int nskeletons = 1;
             int nanimations = 0;
 
@@ -433,7 +433,7 @@ public class hkaAnimation
             string head = reader.ReadHeaderString();
             //TODO: throw exception
             uint version = reader.ReadUInt32();
-            if (version != 0x03000200)
+            if (version != 0x01000200)
             {
 		Console.WriteLine("Error: version mismatch! Abort.");
                 return false;
@@ -495,7 +495,7 @@ public class hkaAnimation
             int numAnnotations = reader.ReadInt32();
             //Console.WriteLine("numAnnotations: {0} ", numAnnotations);
         }
-
+#if false
         byte hasExtractedMotion = reader.ReadByte();
         //Console.WriteLine("hasExtractedMotion: {0} ", hasExtractedMotion);
         if (hasExtractedMotion != (byte)0)
@@ -503,6 +503,7 @@ public class hkaAnimation
             this.defaultMotion = new hkaDefaultMotion();
             this.defaultMotion.Read(reader);
         }
+#endif
     }
 
     /// save anim.bin
@@ -516,8 +517,8 @@ public class hkaAnimation
     {
         using (BinaryWriter writer = new BinaryWriter(stream, System.Text.Encoding.Default))
         {
-            string head = "hkdump File Format, Version 3.0.2.0";
-            uint version = 0x03000200;
+            string head = "hkdump File Format, Version 1.0.2.0";
+            uint version = 0x01000200;
             int nskeletons = 0;
             int nanimations = 1;
 

@@ -15,8 +15,9 @@ namespace MiniCube
         ObjectRef triShape_ref;
 
         BSTriShape triShape;
-        BSSkinInstance skin_instance;
-        BSSkinBoneData bone_data;
+        NiSkinInstance skin_instance;
+        NiSkinData skin_data;
+        NiSkinPartition skin_part;
 
         BSLightingShaderProperty shader_property = null;
         public uint SLSF1
@@ -52,8 +53,9 @@ namespace MiniCube
             this.triShape_ref = triShape_ref;
 
             triShape = header.GetObject<BSTriShape>(triShape_ref);
-            skin_instance = header.GetObject<BSSkinInstance>(triShape.skin);
-            bone_data = header.GetObject<BSSkinBoneData>(skin_instance.data);
+            skin_instance = header.GetObject<NiSkinInstance>(triShape.skin);
+            skin_data = header.GetObject<NiSkinData>(skin_instance.data);
+            skin_part = header.GetObject<NiSkinPartition>(skin_instance.skin_partition);
 
             shader_property = header.GetObject<BSLightingShaderProperty>(triShape.shader_property);
             var shader_texture_set = header.GetObject<BSShaderTextureSet>(shader_property.texture_set);
@@ -73,36 +75,58 @@ namespace MiniCube
 
             // create device resources
             {
-                Vector3[] positions = new Vector3[triShape.num_vertices];
-                Vector2[] uvs = new Vector2[triShape.num_vertices];
-                Vector4[] bone_weights = new Vector4[triShape.num_vertices];
-                uint[] bone_indices = new uint[triShape.num_vertices];
+                uint num_vertices = skin_part.data_size / skin_part.vertex_size;
 
-                for (int v = 0; v < triShape.num_vertices; v++)
+                Vector3[] positions = new Vector3[num_vertices];
+                Vector2[] uvs = new Vector2[num_vertices];
+                Vector4[] bone_weights = new Vector4[num_vertices];
+                uint[] bone_indices = new uint[num_vertices];
+
+                for (int v = 0; v < num_vertices; v++)
                 {
                     positions[v] = Vector3.Zero;
                     for (int x = 0; x < 4; x++)
                     {
-                        int i = triShape.vertex_data[v].bone_indices[x];
-                        float weight = triShape.vertex_data[v].bone_weights[x];
-                        positions[v] += bone_transforms[i] * triShape.vertex_data[v].vertex * weight;
+                        int i = skin_part.vertex_data[v].bone_indices[x];
+                        float weight = skin_part.vertex_data[v].bone_weights[x];
+                        positions[v] += bone_transforms[i] * skin_part.vertex_data[v].vertex * weight;
                     }
-                    uvs[v] = triShape.vertex_data[v].uv;
+                    uvs[v] = skin_part.vertex_data[v].uv;
                     bone_weights[v] = new Vector4(
-                        triShape.vertex_data[v].bone_weights[0],
-                        triShape.vertex_data[v].bone_weights[1],
-                        triShape.vertex_data[v].bone_weights[2],
-                        triShape.vertex_data[v].bone_weights[3]);
-                    bone_indices[v] = System.BitConverter.ToUInt32(triShape.vertex_data[v].bone_indices, 0);
+                        skin_part.vertex_data[v].bone_weights[0],
+                        skin_part.vertex_data[v].bone_weights[1],
+                        skin_part.vertex_data[v].bone_weights[2],
+                        skin_part.vertex_data[v].bone_weights[3]);
+                    bone_indices[v] = System.BitConverter.ToUInt32(skin_part.vertex_data[v].bone_indices, 0);
                 }
+
+                //
+                // concatenate triangles in skin_part.skin_partitions
+                //
+                int len = 0;
+                for (int part_i = 0; part_i < skin_part.num_skin_partitions; part_i++)
+                {
+                    ref SkinPartition part = ref skin_part.skin_partitions[part_i];
+                    len += part.triangles.Length;
+                }
+                Triangle[] triangles = new Triangle[len];
+
+                int off = 0;
+                for (int part_i = 0; part_i < skin_part.num_skin_partitions; part_i++)
+                {
+                    ref SkinPartition part = ref skin_part.skin_partitions[part_i];
+                    part.triangles.CopyTo(triangles, off);
+                    off += part.triangles.Length;
+                }
+                //
 
                 this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, positions);
                 this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
                 this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, bone_weights);
                 this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, bone_indices);
-                this.ib = Buffer.Create(device, BindFlags.IndexBuffer, triShape.triangles);
+                this.ib = Buffer.Create(device, BindFlags.IndexBuffer, triangles);
 
-                this.num_triangle_points = triShape.triangles.Length * 3;
+                this.num_triangle_points = triangles.Length * 3;
             }
         }
 
@@ -146,7 +170,7 @@ namespace MiniCube
             node.self_ref = node_ref;
 
             NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
-            NiDump.Transform bone_trans = bone_data.transforms[i].transform;
+            NiDump.Transform bone_trans = skin_data.bone_data[i].transform;
             t = node_local * bone_trans;
         }
 

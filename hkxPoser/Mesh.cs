@@ -50,12 +50,16 @@ namespace MiniCube
             vb_positions.Dispose();
         }
 
-        public Mesh(Device device, NiHeader header, ObjectRef triShape_ref)
+        public Mesh(Device device, NiHeader header, ObjectRef triShape_ref, bool dynamic_p = false)
         {
             this.header = header;
             this.triShape_ref = triShape_ref;
 
-            triShape = header.GetObject<BSTriShape>(triShape_ref);
+            if (dynamic_p)
+                triShape = header.GetObject<BSDynamicTriShape>(triShape_ref);
+            else
+                triShape = header.GetObject<BSTriShape>(triShape_ref);
+
             skin_instance = header.GetObject<NiSkinInstance>(triShape.skin);
             skin_data = header.GetObject<NiSkinData>(skin_instance.data);
             skin_part = header.GetObject<NiSkinPartition>(skin_instance.skin_partition);
@@ -68,6 +72,9 @@ namespace MiniCube
             num_bones = skin_instance.num_bones;
             bones = skin_instance.bones;
 
+            //
+            // skinning
+            //
             NiDump.Transform[] bone_transforms;
 
             bone_transforms = new NiDump.Transform[num_bones];
@@ -75,37 +82,65 @@ namespace MiniCube
             {
                 GetBoneLocal(i, out bone_transforms[i]);
             }
+            //
 
+            //
             // create device resources
+            //
+            int num_vertices = (int)skin_part.data_size / (int)skin_part.vertex_size;
+
+            Vector3[] positions = new Vector3[num_vertices];
+            Vector3[] skinned_positions = new Vector3[num_vertices];
+            Vector2[] uvs = new Vector2[num_vertices];
+            Vector4[] bone_weights = new Vector4[num_vertices];
+            uint[] bone_indices = new uint[num_vertices];
+
+            if (dynamic_p)
             {
-                uint num_vertices = skin_part.data_size / skin_part.vertex_size;
-
-                Vector3[] positions = new Vector3[num_vertices];
-                Vector2[] uvs = new Vector2[num_vertices];
-                Vector4[] bone_weights = new Vector4[num_vertices];
-                uint[] bone_indices = new uint[num_vertices];
-
-                for (int v = 0; v < num_vertices; v++)
+                BSDynamicTriShape dynamicTriShape = (BSDynamicTriShape)triShape;
                 {
-                    positions[v] = Vector3.Zero;
-                    for (int x = 0; x < 4; x++)
+                    for (int i = 0; i < dynamicTriShape.vertices.Length; i++)
                     {
-                        int i = skin_part.vertex_data[v].bone_indices[x];
-                        float weight = skin_part.vertex_data[v].bone_weights[x];
-                        positions[v] += bone_transforms[i] * skin_part.vertex_data[v].vertex * weight;
+                        // danger!
+                        positions[i] = (Vector3)dynamicTriShape.vertices[i];
                     }
-                    uvs[v] = skin_part.vertex_data[v].uv;
-                    bone_weights[v] = new Vector4(
-                        skin_part.vertex_data[v].bone_weights[0],
-                        skin_part.vertex_data[v].bone_weights[1],
-                        skin_part.vertex_data[v].bone_weights[2],
-                        skin_part.vertex_data[v].bone_weights[3]);
-                    bone_indices[v] = System.BitConverter.ToUInt32(skin_part.vertex_data[v].bone_indices, 0);
                 }
+            }
+
+            for (int i = 0; i < num_vertices; i++)
+            {
+                if (! dynamic_p)
+                    positions[i] = skin_part.vertex_data[i].vertex;
 
                 //
-                // concatenate triangles in skin_part.skin_partitions
+                // skinning
                 //
+                skinned_positions[i] = Vector3.Zero;
+                for (int x = 0; x < 4; x++)
+                {
+                    int bone_idx = skin_part.vertex_data[i].bone_indices[x];
+                    float weight = skin_part.vertex_data[i].bone_weights[x];
+                    skinned_positions[i] += bone_transforms[bone_idx] * positions[i] * weight;
+                }
+                //
+                uvs[i] = skin_part.vertex_data[i].uv;
+                bone_weights[i] = new Vector4(
+                    skin_part.vertex_data[i].bone_weights[0],
+                    skin_part.vertex_data[i].bone_weights[1],
+                    skin_part.vertex_data[i].bone_weights[2],
+                    skin_part.vertex_data[i].bone_weights[3]);
+                bone_indices[i] = System.BitConverter.ToUInt32(skin_part.vertex_data[i].bone_indices, 0);
+            }
+
+            //
+            // concatenate triangles in skin_part.skin_partitions
+            //
+            this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, skinned_positions);
+            this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
+            this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, bone_weights);
+            this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, bone_indices);
+
+            {
                 int len = 0;
                 for (int part_i = 0; part_i < skin_part.num_skin_partitions; part_i++)
                 {
@@ -121,16 +156,11 @@ namespace MiniCube
                     part.triangles.CopyTo(triangles, off);
                     off += part.triangles.Length;
                 }
-                //
-
-                this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, positions);
-                this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
-                this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, bone_weights);
-                this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, bone_indices);
                 this.ib = Buffer.Create(device, BindFlags.IndexBuffer, triangles);
-
                 this.num_triangle_points = triangles.Length * 3;
             }
+            //
+
         }
 
         public string GetBoneName(int i)

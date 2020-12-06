@@ -22,14 +22,15 @@ namespace MiniCube
             NiObject.user_version_2 = header.user_version_2;
 
             int bt_BSTriShape = header.GetBlockTypeIdxByName("BSTriShape");
+            int bt_BSDynamicTriShape = header.GetBlockTypeIdxByName("BSDynamicTriShape");
             int bt_BSSubIndexTriShape = header.GetBlockTypeIdxByName("BSSubIndexTriShape");
             int num_blocks = header.blocks.Length;
             List<Mesh> mesh_collection = new List<Mesh>();
             for (int i = 0; i < header.blocks.Length; i++)
             {
-                if (header.blocks[i].type == bt_BSTriShape)
+                if (header.blocks[i].type == bt_BSTriShape || header.blocks[i].type == bt_BSDynamicTriShape)
                 {
-                    Mesh mesh = new Mesh(device, header, i);
+                    Mesh mesh = new Mesh(device, header, i, header.blocks[i].type == bt_BSDynamicTriShape);
                     mesh_collection.Add(mesh);
                 }
             }

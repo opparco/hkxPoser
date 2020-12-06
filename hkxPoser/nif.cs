@@ -23,7 +23,8 @@ namespace MiniCube
 
             int bt_BSTriShape = header.GetBlockTypeIdxByName("BSTriShape");
             int bt_BSDynamicTriShape = header.GetBlockTypeIdxByName("BSDynamicTriShape");
-            int bt_BSSubIndexTriShape = header.GetBlockTypeIdxByName("BSSubIndexTriShape");
+            // fo4:
+            //int bt_BSSubIndexTriShape = header.GetBlockTypeIdxByName("BSSubIndexTriShape");
             int num_blocks = header.blocks.Length;
             List<Mesh> mesh_collection = new List<Mesh>();
             for (int i = 0; i < header.blocks.Length; i++)

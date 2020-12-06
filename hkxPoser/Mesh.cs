@@ -1,8 +1,11 @@
+using System;
 using System.IO;
 using System.Collections.Generic;
 using NiDump;
 using SharpDX;
 using SharpDX.Direct3D11;
+
+using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace MiniCube
 {
@@ -137,32 +140,6 @@ namespace MiniCube
             return header.strings[node.name];
         }
 
-        void TransformToMatrix(ref NiDump.Transform t, out Matrix m)
-        {
-            m = new Matrix
-            {
-                M11 = t.rotation.M11,
-                M12 = t.rotation.M21,
-                M13 = t.rotation.M31,
-                M14 = 0,
-
-                M21 = t.rotation.M12,
-                M22 = t.rotation.M22,
-                M23 = t.rotation.M32,
-                M24 = 0,
-
-                M31 = t.rotation.M13,
-                M32 = t.rotation.M23,
-                M33 = t.rotation.M33,
-                M34 = 0,
-
-                M41 = t.translation.X,
-                M42 = t.translation.Y,
-                M43 = t.translation.Z,
-                M44 = 1
-            };
-        }
-
         public void GetBoneLocal(int i, out NiDump.Transform t)
         {
             ObjectRef node_ref = this.bones[i];
@@ -172,13 +149,6 @@ namespace MiniCube
             NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
             NiDump.Transform bone_trans = skin_data.bone_data[i].transform;
             t = node_local * bone_trans;
-        }
-
-        public void GetBoneLocal(int i, out Matrix m)
-        {
-            NiDump.Transform t;
-            GetBoneLocal(i, out t);
-            TransformToMatrix(ref t, out m);
         }
     }
 }

@@ -100,7 +100,7 @@ namespace hkxPoser
             this.device = device;
             this.hkaskeleton = hkaskeleton;
 
-            string nifskeleton_path = Path.Combine(Application.StartupPath, @"data\skeleton_female.nif");
+            string nifskeleton_path = Path.Combine(Application.StartupPath, @"data\skeleton.nif");
             nifskeleton = new Skeleton(nifskeleton_path);
 
             string meshes_path = Path.Combine(Application.StartupPath, @"data\meshes");
@@ -259,6 +259,16 @@ namespace hkxPoser
             context.ClearDepthStencilView(depthView, DepthStencilClearFlags.Depth | DepthStencilClearFlags.Stencil, 1.0f, 0);
             context.ClearRenderTargetView(renderView, ScreenColor);
 
+            for (int i = 0; i < hkaskeleton.bones.Length; i++)
+            {
+                int node_idx;
+                if (hkanodeMap.TryGetValue(i, out node_idx))
+                {
+                    Transform local = hkaskeleton.bones[i].local * hkaskeleton.bones[i].patch;
+                    nifskeleton.nodes[node_idx].local = local;
+                }
+            }
+
             foreach (NiFile nif in nifs)
                 foreach (Mesh mesh in nif.meshes)
                 {
@@ -289,6 +299,7 @@ namespace hkxPoser
             //Quaternion dx_rotation;
             //Quaternion.Conjugate(ref gl_rotation, out dx_rotation);
             Matrix.RotationQuaternion(ref gl_rotation, out m);
+
             m.M41 = t.translation.X;
             m.M42 = t.translation.Y;
             m.M43 = t.translation.Z;
@@ -296,15 +307,6 @@ namespace hkxPoser
 
         void UpdateBoneMatrices(Mesh mesh)
         {
-            for (int i = 0; i < hkaskeleton.bones.Length; i++)
-            {
-                int node_idx;
-                if (hkanodeMap.TryGetValue(i, out node_idx))
-                {
-                    nifskeleton.nodes[node_idx].local = hkaskeleton.bones[i].local * hkaskeleton.bones[i].patch;
-                }
-            }
-
             int[] boneMap = hkabonemapCollection.GetBoneMap(mesh);
             int[] nodeMap = nifbonemapCollection.GetBoneMap(mesh);
 
@@ -317,8 +319,10 @@ namespace hkxPoser
                     continue;
                 }
 
-                Transform node_world = nifskeleton.nodes[node_idx].GetWorldCoordinate();
-                Transform rest_world = nifskeleton.nodes[node_idx].rest_world;
+                Node node = nifskeleton.nodes[node_idx];
+
+                Transform node_world = node.GetWorldCoordinate();
+                Transform rest_world = node.rest_world;
 
                 //Transform t = rest_world.inv * node_world;
                 //TransformToMatrix(ref t, out bone_matrices[i]);

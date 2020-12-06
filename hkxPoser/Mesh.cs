@@ -146,7 +146,7 @@ namespace MiniCube
             node.self_ref = node_ref;
 
             NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
-            NiDump.Transform bone_trans = bone_data.transforms[i].transform;
+            NiDump.Transform bone_trans = bone_data.bones[i].transform;
             t = node_local * bone_trans;
         }
 

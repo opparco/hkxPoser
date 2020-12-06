@@ -75,18 +75,24 @@ namespace MiniCube
             //
             // skinning
             //
-            NiDump.Transform[] bone_transforms;
+            NiDump.Transform[] bone_transforms = new NiDump.Transform[num_bones];
 
-            bone_transforms = new NiDump.Transform[num_bones];
             for (int i = 0; i < num_bones; i++)
             {
-                GetBoneLocal(i, out bone_transforms[i]);
+                ObjectRef node_ref = this.bones[i];
+                NiNode node = header.GetObject<NiNode>(node_ref);
+                node.self_ref = node_ref;
+
+                NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
+                NiDump.Transform bone_trans = skin_data.bone_data[i].transform;
+                bone_transforms[i] = node_local * bone_trans;
             }
             //
 
             //
             // create device resources
             //
+            // triShape.num_vertices = 0
             int num_vertices = (int)skin_part.data_size / (int)skin_part.vertex_size;
 
             Vector3[] positions = new Vector3[num_vertices];
@@ -132,14 +138,14 @@ namespace MiniCube
                 bone_indices[i] = System.BitConverter.ToUInt32(skin_part.vertex_data[i].bone_indices, 0);
             }
 
-            //
-            // concatenate triangles in skin_part.skin_partitions
-            //
             this.vb_positions = Buffer.Create(device, BindFlags.VertexBuffer, skinned_positions);
             this.vb_uvs = Buffer.Create(device, BindFlags.VertexBuffer, uvs);
             this.vb_weights = Buffer.Create(device, BindFlags.VertexBuffer, bone_weights);
             this.vb_indices = Buffer.Create(device, BindFlags.VertexBuffer, bone_indices);
 
+            //
+            // concatenate triangles in skin_part.skin_partitions
+            //
             {
                 int len = 0;
                 for (int part_i = 0; part_i < skin_part.num_skin_partitions; part_i++)
@@ -168,17 +174,6 @@ namespace MiniCube
             ObjectRef node_ref = this.bones[i];
             NiNode node = header.GetObject<NiNode>(node_ref);
             return header.strings[node.name];
-        }
-
-        public void GetBoneLocal(int i, out NiDump.Transform t)
-        {
-            ObjectRef node_ref = this.bones[i];
-            NiNode node = header.GetObject<NiNode>(node_ref);
-            node.self_ref = node_ref;
-
-            NiDump.Transform node_local = node.GetLocalTransform(skin_instance.skeleton_root);
-            NiDump.Transform bone_trans = skin_data.bone_data[i].transform;
-            t = node_local * bone_trans;
         }
     }
 }

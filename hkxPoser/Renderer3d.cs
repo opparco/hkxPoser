@@ -264,8 +264,7 @@ namespace hkxPoser
                 int node_idx;
                 if (hkanodeMap.TryGetValue(i, out node_idx))
                 {
-                    Transform local = hkaskeleton.bones[i].local * hkaskeleton.bones[i].patch;
-                    nifskeleton.nodes[node_idx].local = local;
+                    nifskeleton.nodes[node_idx].local = hkaskeleton.bones[i].local * hkaskeleton.bones[i].patch;
                 }
             }
 

@@ -93,7 +93,7 @@ namespace MiniCube
             // create device resources
             //
             // triShape.num_vertices = 0
-            int num_vertices = (int)skin_part.data_size / (int)skin_part.vertex_size;
+            uint num_vertices = skin_part.data_size / skin_part.vertex_size;
 
             Vector3[] positions = new Vector3[num_vertices];
             Vector3[] skinned_positions = new Vector3[num_vertices];

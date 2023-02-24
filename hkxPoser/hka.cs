@@ -15,11 +15,16 @@ public class Transform
     public Quaternion rotation;
     public float scale;
 
+    public Quaternion axisRotation;
+    public Vector3 axisTranslation;
+
     public Transform()
     {
         this.translation = Vector3.Zero;
+        this.axisTranslation = Vector3.Zero;
         this.rotation = Quaternion.Identity;
         this.scale = 1.0f;
+        this.axisRotation = Quaternion.Identity;
     }
 
     public Transform(Vector3 translation, Quaternion rotation, float scale)
@@ -27,17 +32,56 @@ public class Transform
         this.translation = translation;
         this.rotation = rotation;
         this.scale = scale;
+        this.axisRotation = Quaternion.Identity;
+        this.axisTranslation = Vector3.Zero;
     }
+
 
     public Transform(Transform t)
     {
         this.translation = t.translation;
         this.rotation = t.rotation;
         this.scale = t.scale;
+        this.axisRotation = t.axisRotation;
+        this.axisTranslation = t.axisTranslation;
     }
 
     public static Transform operator *(Transform t1, Transform t2)
     {
+
+        if(t1.axisTranslation != Vector3.Zero && t1.axisTranslation != Vector3.Zero)
+        {
+            Transform result = new Transform(t1);
+            result.axisTranslation += t2.axisTranslation;
+            return result;
+        }
+        else
+        {
+            if (t2.axisTranslation != Vector3.Zero)
+            {
+             return  new Transform(
+             t1.translation + t2.axisTranslation,
+             t1.rotation * t2.rotation,
+             t1.scale * t2.scale);
+            }
+        }
+
+        if(t1.axisRotation != Quaternion.Identity && t2.axisRotation == Quaternion.Identity)
+        {
+            Vector3 result = new Vector3();
+            Vector3.Transform(ref t2.translation, ref t1.axisRotation, out result);
+            return new Transform(result, t1.axisRotation * t2.rotation , t1.scale * t2.scale);
+
+        }
+
+        if (t2.axisRotation != Quaternion.Identity && t1.axisRotation == Quaternion.Identity)
+        {
+            Vector3 result = new Vector3();
+            Vector3.Transform(ref t1.translation, ref t2.axisRotation, out result);
+            return new Transform(result, t2.axisRotation * t1.rotation, t1.scale * t2.scale);
+
+        }
+
         return new Transform(
             t1.translation + Vector3.Transform(t2.translation, t1.rotation) * t1.scale,
             t1.rotation * t2.rotation,
@@ -318,6 +362,25 @@ public class hkaPose
         {
             this.floats[i] = reader.ReadSingle();
         }
+    }
+
+    public void WriteExport(BinaryWriter writer)
+    {
+
+        writer.Write(transforms.Length);
+        writer.Write(floats.Length);
+        Write(writer);
+    }
+
+
+    public void readimport(BinaryReader reader)
+    {
+        int numTransforms;
+        int numFloats;
+        numTransforms = reader.ReadInt32();
+        numFloats = reader.ReadInt32();
+        Read(reader, numTransforms, numFloats);
+
     }
 
     public void Write(BinaryWriter writer)

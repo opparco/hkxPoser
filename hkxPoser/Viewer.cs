@@ -72,18 +72,21 @@ namespace hkxPoser
         {
             control.MouseDown += new MouseEventHandler(form_OnMouseDown);
             control.MouseMove += new MouseEventHandler(form_OnMouseMove);
+            control.KeyDown += new KeyEventHandler(Control_KeyDown);
 
         }
 
         private void Control_KeyDown(object sender, KeyEventArgs e)
         {
-            throw new NotImplementedException();
+           // ((Form2)control).ReceiveKeyDown(sender, e);
+            Console.WriteLine("keydown");
         }
 
         public void DetachMouseEventHandler(Control control)
         {
             control.MouseMove -= new MouseEventHandler(form_OnMouseMove);
             control.MouseDown -= new MouseEventHandler(form_OnMouseDown);
+            control.KeyDown -= new KeyEventHandler(Control_KeyDown);
         }
 
         Viewport viewport;
@@ -205,6 +208,7 @@ namespace hkxPoser
             }
         }
 
+
         public void ApplyPatchToAnimation()
         {
             foreach (hkaPose pose in anim.pose)
@@ -237,17 +241,21 @@ namespace hkxPoser
             {
                 for (int frame = startFrame + 1; frame < toFrame; ++frame)
                 {
-
-                    Transform toTransfrom = toPose.transforms[i] * skeleton.bones[i].patch;
-                    Transform fromTransfrom = pose.transforms[i];
-                    float ratio = (float)(frame - startFrame) / (float)(toFrame - startFrame);
-                    Quaternion rotation = Quaternion.Slerp(fromTransfrom.rotation, toTransfrom.rotation, ratio);
-                    Vector3 trans = fromTransfrom.translation + (toTransfrom.translation - fromTransfrom.translation) * ratio;
-                    anim.pose[frame].transforms[i] = new Transform(trans, rotation, 1.0f);
+                    if (skeleton.bones[i].patch.rotation != Quaternion.Identity || skeleton.bones[i].patch.translation != Vector3.Zero)
+                    {
+                        Transform toTransfrom = toPose.transforms[i] * skeleton.bones[i].patch;
+                        Transform fromTransfrom = pose.transforms[i];
+                        float ratio = (float)(frame - startFrame) / (float)(toFrame - startFrame);
+                        Quaternion rotation = Quaternion.Slerp(fromTransfrom.rotation, toTransfrom.rotation, ratio);
+                        Vector3 trans = fromTransfrom.translation + (toTransfrom.translation - fromTransfrom.translation) * ratio;
+                        anim.pose[frame].transforms[i] = new Transform(trans, rotation, 1.0f);
+                    }
 
 
                 }
             }
+
+
 
             for (int frame = toFrame; frame < anim.pose.Length; ++frame)
             {
@@ -263,7 +271,58 @@ namespace hkxPoser
             command_man.ClearCommands();
         }
 
-        public void deleteAnimationFrame(int toFrame)
+
+
+        public void makeToAnimationBezier(int toFrame)
+        {
+
+            if (startFrame >= toFrame)
+            {
+                string caption = "Error Detected in Input";
+                MessageBoxButtons buttons = MessageBoxButtons.OK;
+                MessageBox.Show("Failed to make animation", caption, buttons);
+                return;
+            }
+
+            hkaPose pose = anim.pose[startFrame];
+            hkaPose toPose = anim.pose[toFrame];
+            float curveStrength = 0.1f;
+            int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
+            for (int i = 0; i < nbones; i++)
+            {
+                for (int frame = startFrame + 1; frame < toFrame; ++frame)
+                {
+                    if(skeleton.bones[i].patch.rotation != Quaternion.Identity || skeleton.bones[i].patch.translation != Vector3.Zero)
+                    {
+                        Transform toTransfrom = toPose.transforms[i] * skeleton.bones[i].patch;
+                        Transform fromTransfrom = pose.transforms[i];
+                        float ratio = (float)(frame - startFrame) / (float)(toFrame - startFrame);
+                        ratio = ratio * ratio * (3f - 2f * ratio); // Bezier 0.33,0, 0.66,1
+                        Quaternion rotation = Quaternion.Slerp(fromTransfrom.rotation, toTransfrom.rotation, ratio);
+                        Vector3 trans = fromTransfrom.translation + (toTransfrom.translation - fromTransfrom.translation) * ratio;
+                        anim.pose[frame].transforms[i] = new Transform(trans, rotation, 1.0f);
+                    }
+
+
+                }
+            }
+
+            for (int frame = toFrame; frame < anim.pose.Length; ++frame)
+            {
+                pose = anim.pose[frame];
+                nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
+                for (int i = 0; i < nbones; i++)
+                {
+                    pose.transforms[i] *= skeleton.bones[i].patch;
+                }
+            }
+
+
+            ClearPatch();
+            command_man.ClearCommands();
+        }
+
+            public void deleteAnimationFrame(int toFrame)
         {
             hkaPose[] pose1;
             int length = anim.pose.Length - (toFrame - startFrame + 1);
@@ -613,7 +672,7 @@ namespace hkxPoser
         public void exportPose(int idx)
         {
             hkaPose pose = anim.pose[idx];
-            BinaryWriter bw = new BinaryWriter(new FileStream("a.dat", FileMode.Create));
+            BinaryWriter bw = new BinaryWriter(new FileStream("pose_temp.dat", FileMode.Create));
             pose.WriteExport(bw);
             bw.Close();
             Console.WriteLine("pose.transforms.Length {0}, floats.Length: {1}", pose.transforms.Length, pose.floats.Length);
@@ -627,11 +686,48 @@ namespace hkxPoser
             bw.Close();
         }
 
+        public void exportAnimation(int idx)
+        {
+         
+            BinaryWriter bw = new BinaryWriter(new FileStream("anime_temp.dat", FileMode.Create));
+            anim.Write(bw,startFrame, idx);
+            //pose.WriteExport(bw);
+            bw.Close();
+            Console.WriteLine("pose.transforms.Length {0}, floats.Length: {1}", anim.numTransforms, anim.numFloats);
+        }
+
+        public void importAnimation(int idx)
+        {
+            hkaAnimation hkaTemp = new hkaAnimation();
+
+
+            BinaryReader br = new BinaryReader(new FileStream("anime_temp.dat", FileMode.Open));
+            hkaTemp.Read(br);
+            Console.WriteLine("anime.transforms.Length {0}, floats.Length: {1}", hkaTemp.numTransforms, anim.numFloats);
+
+            int length = hkaTemp.pose.Length;
+            hkaPose[] newPoses = new hkaPose[length + anim.pose.Length];
+
+            Array.Copy(anim.pose, newPoses, idx + 1);
+            Array.Copy(anim.pose, idx + 1, newPoses, idx + length + 1, newPoses.Length - idx - length - 1);
+            Array.Copy(hkaTemp.pose, 0, newPoses, idx + 1, length);
+            int orgLength = anim.pose.Length;
+            anim.pose = newPoses;
+            anim.numOriginalFrames = newPoses.Length;
+            anim.duration = anim.duration * (float)newPoses.Length / (float)orgLength;
+
+            if (LoadAnimationEvent != null)
+                LoadAnimationEvent(this, EventArgs.Empty);
+
+            AssignAnimationPose(idx + length);
+
+        }
+
         public void importPose()
         {
             hkaPose pose = new hkaPose();
 
-            BinaryReader br = new BinaryReader(new FileStream("a.dat", FileMode.Open));
+            BinaryReader br = new BinaryReader(new FileStream("pose_temp.dat", FileMode.Open));
 
             pose.readimport(br);
 
@@ -651,17 +747,94 @@ namespace hkxPoser
 
         }
 
+        public void processKey(Keys key)
+        {
+            switch (key)
+            {
+                case Keys.Space:
+                    SelectBone("NPC COM [COM ]");
+                    break;
+                case Keys.D1:
+                    SelectBone("NPC Spine [Spn0]");
+                    break;
+                case Keys.D2:
+                    SelectBone("NPC Spine1 [Spn1]");
+                    break;
+                case Keys.D3:
+                    SelectBone("NPC Spine2 [Spn2]");
+                    break;
+                case Keys.D4:
+                    SelectBone("NPC Neck [Neck]");
+                    break;
+                case Keys.E:
+                    SelectBone("NPC R UpperArm [RUar]");
+                    break;
+                case Keys.R:
+                    SelectBone("NPC L UpperArm [LUar]");
+                    break;
+                case Keys.D:
+                    SelectBone("NPC R Forearm [RLar]");
+                    break;
+                case Keys.F:
+                    SelectBone("NPC L Forearm [LLar]");
+                    break;
+                case Keys.C:
+                    SelectBone("NPC R Hand [RHnd]");
+                    break;
+                case Keys.V:
+                    SelectBone("NPC L Hand [LHnd]");
+                    break;
+                case Keys.T:
+                    SelectBone("NPC R Thigh [RThg]");
+                    break;
+                case Keys.Y:
+                    SelectBone("NPC L Thigh [LThg]");
+                    break;
+                case Keys.G:
+                    SelectBone("NPC R Calf [RClf]");
+                    break;
+                case Keys.H:
+                    SelectBone("NPC L Calf [LClf]");
+                    break;
+                case Keys.B:
+                    SelectBone("NPC R Foot [Rft ]");
+                    break;
+                case Keys.N:
+                    SelectBone("NPC L Foot [Lft ]");
+                    break;
+                case Keys.Q:
+                    RotateAxis(-10, 0, new SharpDX.Vector3(1, 0, 0));
+                    break;
+                case Keys.W:
+                    RotateAxis(10, 0, new SharpDX.Vector3(1, 0, 0));
+                    break;
+                case Keys.A:
+                    RotateAxis(-10, 0, new SharpDX.Vector3(0, 1, 0));
+                    break;
+                case Keys.S:
+                    RotateAxis(10, 0, new SharpDX.Vector3(0, 1, 0));
+                    break;
+                case Keys.Z:
+                    RotateAxis(-10, 0, new SharpDX.Vector3(0, 0, 1));
+                    break;
+                case Keys.X:
+                    RotateAxis(10, 0, new SharpDX.Vector3(0, 0, 1));
+                    break;
+
+            }
+        }
+
 
         public void importPoseFrame(int frame)
         {
             hkaPose pose = new hkaPose();
 
-            BinaryReader br = new BinaryReader(new FileStream("a.dat", FileMode.Open));
+            BinaryReader br = new BinaryReader(new FileStream("pose_temp.dat", FileMode.Open));
 
             pose.readimport(br);
 
             int nbones = System.Math.Min(skeleton.bones.Length, pose.transforms.Length);
-
+            nbones = System.Math.Min(anim.pose[frame].transforms.Length, nbones);
             
             for (int i = 0; i < nbones; i++)
             {

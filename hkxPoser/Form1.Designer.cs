@@ -47,11 +47,15 @@
             this.setStartFrameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.importFrameCtrlVToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.deleteAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.StartFrameLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            this.deleteAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.linearToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.linearToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.importAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.statusStrip1.SuspendLayout();
@@ -156,7 +160,9 @@
             this.setStartFrameToolStripMenuItem,
             this.toToolStripMenuItem,
             this.importFrameCtrlVToolStripMenuItem,
-            this.deleteAnimationToolStripMenuItem});
+            this.deleteAnimationToolStripMenuItem,
+            this.exportAnimationToolStripMenuItem,
+            this.importAnimationToolStripMenuItem});
             this.animationToolStripMenuItem.Name = "animationToolStripMenuItem";
             this.animationToolStripMenuItem.Size = new System.Drawing.Size(75, 20);
             this.animationToolStripMenuItem.Text = "Animation";
@@ -164,23 +170,33 @@
             // setStartFrameToolStripMenuItem
             // 
             this.setStartFrameToolStripMenuItem.Name = "setStartFrameToolStripMenuItem";
-            this.setStartFrameToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.setStartFrameToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.setStartFrameToolStripMenuItem.Text = "Set StartFrame Ctrl+F";
             this.setStartFrameToolStripMenuItem.Click += new System.EventHandler(this.setStartFrameToolStripMenuItem_Click);
             // 
             // toToolStripMenuItem
             // 
+            this.toToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.linearToolStripMenuItem,
+            this.linearToolStripMenuItem1});
             this.toToolStripMenuItem.Name = "toToolStripMenuItem";
-            this.toToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
-            this.toToolStripMenuItem.Text = "MakeAnimation Ctrl+G";
+            this.toToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.toToolStripMenuItem.Text = "MakeAnimation";
             this.toToolStripMenuItem.Click += new System.EventHandler(this.toToolStripMenuItem_Click);
             // 
             // importFrameCtrlVToolStripMenuItem
             // 
             this.importFrameCtrlVToolStripMenuItem.Name = "importFrameCtrlVToolStripMenuItem";
-            this.importFrameCtrlVToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
+            this.importFrameCtrlVToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
             this.importFrameCtrlVToolStripMenuItem.Text = "ImportFrame Ctrl+V";
             this.importFrameCtrlVToolStripMenuItem.Click += new System.EventHandler(this.importFrameCtrlVToolStripMenuItem_Click);
+            // 
+            // deleteAnimationToolStripMenuItem
+            // 
+            this.deleteAnimationToolStripMenuItem.Name = "deleteAnimationToolStripMenuItem";
+            this.deleteAnimationToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
+            this.deleteAnimationToolStripMenuItem.Text = "Delete Animation";
+            this.deleteAnimationToolStripMenuItem.Click += new System.EventHandler(this.deleteAnimationToolStripMenuItem_Click);
             // 
             // trackBar1
             // 
@@ -219,12 +235,33 @@
             this.StartFrameLabel.Size = new System.Drawing.Size(55, 17);
             this.StartFrameLabel.Text = "Rotation:";
             // 
-            // deleteAnimationToolStripMenuItem
+            // linearToolStripMenuItem
             // 
-            this.deleteAnimationToolStripMenuItem.Name = "deleteAnimationToolStripMenuItem";
-            this.deleteAnimationToolStripMenuItem.Size = new System.Drawing.Size(198, 22);
-            this.deleteAnimationToolStripMenuItem.Text = "Delete Animation";
-            this.deleteAnimationToolStripMenuItem.Click += new System.EventHandler(this.deleteAnimationToolStripMenuItem_Click);
+            this.linearToolStripMenuItem.Name = "linearToolStripMenuItem";
+            this.linearToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.linearToolStripMenuItem.Text = "Bezier";
+            this.linearToolStripMenuItem.Click += new System.EventHandler(this.linearToolStripMenuItem_Click);
+            // 
+            // linearToolStripMenuItem1
+            // 
+            this.linearToolStripMenuItem1.Name = "linearToolStripMenuItem1";
+            this.linearToolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.linearToolStripMenuItem1.Text = "Linear";
+            this.linearToolStripMenuItem1.Click += new System.EventHandler(this.linearToolStripMenuItem1_Click);
+            // 
+            // exportAnimationToolStripMenuItem
+            // 
+            this.exportAnimationToolStripMenuItem.Name = "exportAnimationToolStripMenuItem";
+            this.exportAnimationToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.exportAnimationToolStripMenuItem.Text = "Export Animation";
+            this.exportAnimationToolStripMenuItem.Click += new System.EventHandler(this.exportAnimationToolStripMenuItem_Click);
+            // 
+            // importAnimationToolStripMenuItem
+            // 
+            this.importAnimationToolStripMenuItem.Name = "importAnimationToolStripMenuItem";
+            this.importAnimationToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            this.importAnimationToolStripMenuItem.Text = "Import Animation";
+            this.importAnimationToolStripMenuItem.Click += new System.EventHandler(this.importAnimationToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -241,6 +278,8 @@
             this.Load += new System.EventHandler(this.Form1_Load);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.Form1_DragDrop);
             this.DragOver += new System.Windows.Forms.DragEventHandler(this.Form1_DragOver);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyDown);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form1_KeyUp);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseDown);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -274,6 +313,10 @@
         private System.Windows.Forms.ToolStripMenuItem toToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importFrameCtrlVToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem deleteAnimationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem linearToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem linearToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem exportAnimationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem importAnimationToolStripMenuItem;
     }
 }
 

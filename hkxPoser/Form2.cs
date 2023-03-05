@@ -126,44 +126,21 @@ namespace hkxPoser
             e.Cancel = true;
         }
 
+        public void ReceiveKeyDown(object sender, KeyEventArgs e)
+        {
+            Form2_KeyDown(sender, e);
+        }
+
         private void Form2_KeyDown(object sender, KeyEventArgs e)
         {
+            viewer.BeginBoneCommand();
             //Console.WriteLine("keyin");
-            switch (e.KeyCode)
-            {
-                case Keys.Space :
-                    viewer.SelectBone("NPC COM [COM ]");
-                    break;
-                case Keys.D1 :
-                    viewer.SelectBone("NPC Spine [Spn0]");
-                    break;
-                case Keys.D2 :
-                    viewer.SelectBone("NPC Spine1 [Spn1]");
-                    break;
-                case Keys.D3 :
-                    viewer.SelectBone("NPC Spine2 [Spn2]");
-                    break;
-                case Keys.Q:
-                    viewer.RotateAxis(-10, 0, new SharpDX.Vector3(1, 0, 0));
-                    break;
-                case Keys.W:
-                    viewer.RotateAxis(10, 0, new SharpDX.Vector3(1, 0, 0));
-                    break;
-                case Keys.A:
-                    viewer.RotateAxis(-10, 0, new SharpDX.Vector3(0, 1, 0));
-                    break;
-                case Keys.S:
-                    viewer.RotateAxis(10, 0, new SharpDX.Vector3(0, 1, 0));
-                    break;
-                case Keys.Z:
-                    viewer.RotateAxis(-10, 0, new SharpDX.Vector3(0, 0, 1));
-                    break;
-                case Keys.X:
-                    viewer.RotateAxis(10, 0, new SharpDX.Vector3(0, 0, 1));
-                    break;
-            }
+            viewer.processKey(e.KeyCode);
+            if (TransformationEvent != null)
+                TransformationEvent(this, EventArgs.Empty);
+            valueInvalidate();
 
-                        
+
         }
 
         private void Form2_Load(object sender, EventArgs e)
@@ -175,6 +152,11 @@ namespace hkxPoser
         private void btnRotX_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private void Form2_KeyUp(object sender, KeyEventArgs e)
+        {
+            viewer.EndBoneCommand();
         }
     }
 }

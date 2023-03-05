@@ -122,7 +122,10 @@ namespace hkxPoser
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            this.Focus();
+            viewer.BeginBoneCommand();
+            //Console.WriteLine("keyin");
+            viewer.processKey(e.KeyCode);
+            this.ActiveControl = null;
         }
 
         private void Form1_MouseHover(object sender, EventArgs e)
@@ -155,9 +158,7 @@ namespace hkxPoser
 
         private void toToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            viewer.makeToAnimation(trackBar1.Value);
-            viewer.SetStartFrame(trackBar1.Value);
-            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -184,6 +185,15 @@ namespace hkxPoser
                 case Keys.G: // 대화하기
                     if ((keyData & Keys.Control) != 0)
                     {
+                        viewer.makeToAnimationBezier(trackBar1.Value);
+                        viewer.SetStartFrame(trackBar1.Value);
+                        this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+                        return true;
+                    }
+                    break;
+                case Keys.H: // 대화하기
+                    if ((keyData & Keys.Control) != 0)
+                    {
                         viewer.makeToAnimation(trackBar1.Value);
                         viewer.SetStartFrame(trackBar1.Value);
                         this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
@@ -194,7 +204,7 @@ namespace hkxPoser
                     if ((keyData & Keys.Control) != 0)
                     {
                         viewer.importPoseFrame(trackBar1.Value);
-                        viewer.makeToAnimation(trackBar1.Value);
+                        viewer.makeToAnimationBezier(trackBar1.Value);
                         viewer.SetStartFrame(trackBar1.Value);
                         this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
                         return true;
@@ -219,6 +229,43 @@ namespace hkxPoser
         private void deleteAnimationToolStripMenuItem_Click(object sender, EventArgs e)
         {
             viewer.deleteAnimationFrame(trackBar1.Value);
+        }
+
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            viewer.EndBoneCommand();
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void linearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //viewer.makeToAnimation(trackBar1.Value);
+            viewer.makeToAnimationBezier(trackBar1.Value);
+            viewer.SetStartFrame(trackBar1.Value);
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+        }
+
+        private void linearToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            //viewer.makeToAnimation(trackBar1.Value);
+            viewer.makeToAnimation(trackBar1.Value);
+            viewer.SetStartFrame(trackBar1.Value);
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+        }
+
+        private void exportAnimationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.exportAnimation(trackBar1.Value);
+        }
+
+        private void importAnimationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.importAnimation(trackBar1.Value);
+ 
         }
     }
 }

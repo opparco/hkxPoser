@@ -206,6 +206,7 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form2_FormClosing);
             this.Load += new System.EventHandler(this.Form2_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Form2_KeyDown);
+            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Form2_KeyUp);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Control_MouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Control_MouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Control_MouseUp);

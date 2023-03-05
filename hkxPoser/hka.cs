@@ -632,4 +632,43 @@ public class hkaAnimation
             writer.Write((byte)0); // hasExtractedMotion
         }
     }
+
+    public void Write(BinaryWriter writer, int fromFrame, int toFrame)
+    {
+        int length = toFrame - fromFrame + 1;
+        writer.Write(length);
+        writer.Write(this.duration * (float)length / (float)this.numOriginalFrames);
+        writer.Write(this.numTransforms);
+        writer.Write(this.numFloats);
+
+        for (int i = fromFrame; i <= toFrame; i++)
+        {
+            this.pose[i].Write(writer);
+        }
+
+        int numAnnotationTracks = this.numTransforms; // why
+        writer.Write(numAnnotationTracks);
+        {
+            int numAnnotations = this.annotations.Length;
+            writer.Write(numAnnotations);
+
+            for (int i = 0; i < numAnnotations; i++)
+            {
+                this.annotations[i].Write(writer);
+            }
+        }
+        for (int i = 1; i < numAnnotationTracks; i++)
+        {
+            writer.Write((int)0); // numAnnotations
+        }
+        if (this.hasExtractedMotion)
+        {
+            writer.Write((byte)1); // hasExtractedMotion
+            this.defaultMotion.Write(writer);
+        }
+        else
+        {
+            writer.Write((byte)0); // hasExtractedMotion
+        }
+    }
 }

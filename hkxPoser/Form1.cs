@@ -17,7 +17,6 @@ namespace hkxPoser
         public Form1(Settings settings)
         {
             InitializeComponent();
-
             this.ClientSize = settings.ClientSize;
             viewer = new Viewer(settings);
             viewer.LoadAnimationEvent += delegate(object sender, EventArgs args)
@@ -29,6 +28,9 @@ namespace hkxPoser
             {
                 timer1.Enabled = true;
             }
+            
+
+            
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -75,6 +77,7 @@ namespace hkxPoser
         private void trackBar1_ValueChanged(object sender, EventArgs e)
         {
             viewer.SetCurrentPose(trackBar1.Value);
+            this.toolStripStatusLabel1.Text = "Frame:" + trackBar1.Value;
         }
 
         private void Form1_DragDrop(object sender, DragEventArgs e)
@@ -90,6 +93,179 @@ namespace hkxPoser
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
                 e.Effect = DragDropEffects.Move;
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+
+        }
+
+        private void fileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.exportPose(trackBar1.Value);
+        }
+
+        private void importToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.importPose();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            viewer.BeginBoneCommand();
+            //Console.WriteLine("keyin");
+            viewer.processKey(e.KeyCode);
+            this.ActiveControl = null;
+        }
+
+        private void Form1_MouseHover(object sender, EventArgs e)
+        {
+            
+        }
+
+        private void Form1_MouseDown(object sender, MouseEventArgs e)
+        {
+            this.Focus();
+        }
+
+        private void applyPatcchToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.ApplyPatchToAnimation();
+            viewer.AssignAnimationPose(0);
+        }
+
+        private void toolStripStatusLabel1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void setStartFrameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+            viewer.SetStartFrame(trackBar1.Value);
+            
+        }
+
+        private void toToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys key = keyData & ~(Keys.Shift | Keys.Control);
+
+            switch (key)
+            {
+                case Keys.E: // Export
+                    if ((keyData & Keys.Control) != 0)
+                    {
+                        viewer.exportPose(trackBar1.Value);
+                        return true;
+                    }
+                    break;
+                case Keys.F: // 대화하기
+                    if ((keyData & Keys.Control) != 0)
+                    {
+                        viewer.SetStartFrame(trackBar1.Value);
+                        this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+                        return true;
+                    }
+                    break;
+                case Keys.G: // 대화하기
+                    if ((keyData & Keys.Control) != 0)
+                    {
+                        viewer.makeToAnimationBezier(trackBar1.Value);
+                        viewer.SetStartFrame(trackBar1.Value);
+                        this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+                        return true;
+                    }
+                    break;
+                case Keys.H: // 대화하기
+                    if ((keyData & Keys.Control) != 0)
+                    {
+                        viewer.makeToAnimation(trackBar1.Value);
+                        viewer.SetStartFrame(trackBar1.Value);
+                        this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+                        return true;
+                    }
+                    break;
+                case Keys.V: // 대화하기
+                    if ((keyData & Keys.Control) != 0)
+                    {
+                        viewer.importPoseFrame(trackBar1.Value);
+                        viewer.makeToAnimationBezier(trackBar1.Value);
+                        viewer.SetStartFrame(trackBar1.Value);
+                        this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+                        return true;
+                    }
+                    break;
+                case Keys.F5:
+                    //MessageBox.Show("f5");
+                    return true;
+                    //break;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void importFrameCtrlVToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.importPoseFrame(trackBar1.Value);
+            viewer.makeToAnimation(trackBar1.Value);
+            viewer.SetStartFrame(trackBar1.Value);
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+        }
+
+        private void deleteAnimationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.deleteAnimationFrame(trackBar1.Value);
+        }
+
+        private void Form1_KeyUp(object sender, KeyEventArgs e)
+        {
+            viewer.EndBoneCommand();
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void linearToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //viewer.makeToAnimation(trackBar1.Value);
+            viewer.makeToAnimationBezier(trackBar1.Value);
+            viewer.SetStartFrame(trackBar1.Value);
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+        }
+
+        private void linearToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            //viewer.makeToAnimation(trackBar1.Value);
+            viewer.makeToAnimation(trackBar1.Value);
+            viewer.SetStartFrame(trackBar1.Value);
+            this.StartFrameLabel.Text = "StartFrame:" + trackBar1.Value;
+        }
+
+        private void exportAnimationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.exportAnimation(trackBar1.Value);
+        }
+
+        private void importAnimationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewer.importAnimation(trackBar1.Value);
+ 
         }
     }
 }
